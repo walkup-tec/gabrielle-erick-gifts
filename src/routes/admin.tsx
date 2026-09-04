@@ -12,11 +12,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime, maskWhatsapp } from "@/lib/format";
 import {
+  adminBootstrap,
   adminDeleteGift,
   adminDeleteGuest,
   adminListGifts,
   adminListGuests,
   adminListReservations,
+  adminExists,
   adminOverview,
   adminSaveGift,
   adminSaveGuest,
