@@ -1,0 +1,5 @@
+node_modules
+.git
+.lovable
+*.md
+.DS_Store
