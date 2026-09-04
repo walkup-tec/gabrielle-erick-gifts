@@ -276,3 +276,36 @@ export const adminSetReservationStatus = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+/* ------------------------------ Primeiro acesso ------------------------------ */
+
+/** Informa se a conta do casal já existe (usado na tela de entrada). */
+export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+  return { exists: (data?.length ?? 0) > 0 };
+});
+
+/** Cria a conta do casal apenas enquanto nenhum administrador existir. */
+export const adminBootstrap = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ email: z.string().email(), password: z.string().min(8).max(72) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    if ((existing?.length ?? 0) > 0) return { ok: false, error: "A conta do casal já existe." };
+
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+    });
+    if (error || !created.user) return { ok: false, error: "Não foi possível criar a conta." };
+
+    await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: "admin" });
+    return { ok: true };
+  });
