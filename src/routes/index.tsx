@@ -15,7 +15,7 @@ import { site } from "@/content/site";
 import { isValidWhatsapp, maskWhatsapp } from "@/lib/format";
 import { confirmReservation, getInvite, type PublicGift } from "@/lib/invite.functions";
 
-type Search = { token?: string };
+type Search = { token?: string | undefined };
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): Search => ({
@@ -251,8 +251,14 @@ function Selecao({
   }
 
   async function confirmar() {
-    if (nomeInput.trim().length < 2) return toast.error(site.erros.nomeObrigatorio);
-    if (!isValidWhatsapp(whats)) return toast.error(site.erros.whatsappObrigatorio);
+    if (nomeInput.trim().length < 2) {
+      toast.error(site.erros.nomeObrigatorio);
+      return;
+    }
+    if (!isValidWhatsapp(whats)) {
+      toast.error(site.erros.whatsappObrigatorio);
+      return;
+    }
     setEnviando(true);
     try {
       const resultado = await enviar({

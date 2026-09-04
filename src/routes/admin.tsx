@@ -192,7 +192,10 @@ function Presentes() {
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     const r = await salvar({ data: { id, name: nome.trim(), desired: Number(qtd) || 1 } });
-    if (!r.ok) return toast.error(r.error ?? "Não foi possível salvar.");
+    if (!r.ok) {
+      toast.error(r.error ?? "Não foi possível salvar.");
+      return;
+    }
     toast.success("Presente salvo.");
     setId(undefined);
     setNome("");
@@ -280,7 +283,10 @@ function Presentes() {
                     onClick={async () => {
                       if (!confirm(`Excluir "${g.name}"?`)) return;
                       const r = await excluir({ data: { id: g.id } });
-                      if (!r.ok) return toast.error(r.error ?? "Não foi possível excluir.");
+                      if (!r.ok) {
+                        toast.error(r.error ?? "Não foi possível excluir.");
+                        return;
+                      }
                       recarregar();
                     }}
                   >
@@ -460,7 +466,10 @@ function Escolhas() {
 
   async function set(reservationId: string, giftId: string, quantity: number) {
     const r = await ajustar({ data: { reservationId, giftId, quantity } });
-    if (!r.ok) return toast.error(r.error ?? "Não foi possível ajustar.");
+    if (!r.ok) {
+      toast.error(r.error ?? "Não foi possível ajustar.");
+      return;
+    }
     recarregar();
   }
 
