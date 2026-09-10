@@ -20,5 +20,8 @@ ENV PORT=3000
 ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=3000
 COPY --from=build /app/.output /app/.output
+COPY --from=build /app/.env /app/.env
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 EXPOSE 3000
-CMD ["bun", "/app/.output/server/index.mjs"]
+CMD ["/app/start.sh"]
