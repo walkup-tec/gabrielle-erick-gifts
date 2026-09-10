@@ -10,9 +10,10 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
 ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
 ENV NITRO_PRESET=node-server
-RUN bun run build
+RUN bun run build && bun -e 'import { readFileSync, writeFileSync } from "fs"; const p = ".output/server/index.mjs"; const from = "var host = process.env.NITRO_HOST || process.env.HOST;"; const t = readFileSync(p, "utf8"); if (!t.includes(from)) { console.error("nitro bind line missing"); process.exit(1); } writeFileSync(p, t.replace(from, "var host = \"0.0.0.0\";")); console.log("patched nitro to bind 0.0.0.0");'
 
 FROM oven/bun:1 AS runner
+USER root
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
@@ -21,7 +22,8 @@ ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=3000
 COPY --from=build /app/.output /app/.output
 COPY --from=build /app/.env /app/.env
+COPY listen.mjs /app/listen.mjs
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 EXPOSE 3000
-CMD ["/app/start.sh"]
+CMD ["bun", "/app/listen.mjs"]
