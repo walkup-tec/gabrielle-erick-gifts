@@ -8,14 +8,13 @@ if [ -f /app/.env ]; then
   set +a
 fi
 
-# EasyPanel sets HOST to the public domain. Nitro binds to HOST, the
-# process exits, and Traefik returns 502. Always listen on all interfaces.
+# EasyPanel injects HOST=<public domain>. Nitro would bind that and die (502).
 export HOST=0.0.0.0
 export NITRO_HOST=0.0.0.0
 export PORT="${PORT:-3000}"
 export NITRO_PORT="${PORT}"
 
-echo "[gabrielle] starting Nitro on 0.0.0.0:${PORT}"
+echo "[gabrielle] starting on 0.0.0.0:${PORT} (and 3000)"
 
 if [ ! -f /app/.output/server/index.mjs ]; then
   echo "[gabrielle] missing /app/.output/server/index.mjs"
@@ -23,4 +22,4 @@ if [ ! -f /app/.output/server/index.mjs ]; then
   exit 1
 fi
 
-exec bun /app/.output/server/index.mjs
+exec bun /app/listen.mjs
