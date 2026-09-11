@@ -1,27 +1,15 @@
-import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-type Ctx = { userId: string };
+const requireMaster = createMiddleware({ type: "function" }).server(async ({ next }) => {
+  const { assertMasterCookie } = await import("@/lib/admin-auth.server");
+  assertMasterCookie();
+  return next();
+});
 
-/**
- * Garante que o usuário autenticado é administrador.
- * O primeiro usuário criado assume o papel de administrador (bootstrap do casal).
- */
-async function ensureAdmin(context: Ctx) {
+/** Acesso ao banco depois que o cookie master já foi validado. */
+async function ensureAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: existing } = await supabaseAdmin
-    .from("user_roles")
-    .select("user_id")
-    .eq("role", "admin");
-
-  if (!existing || existing.length === 0) {
-    await supabaseAdmin.from("user_roles").insert({ user_id: context.userId, role: "admin" });
-    return supabaseAdmin;
-  }
-  if (!existing.some((r) => r.user_id === context.userId)) {
-    throw new Error("Acesso restrito");
-  }
   return supabaseAdmin;
 }
 
@@ -78,9 +66,9 @@ async function computeGifts(db: Awaited<ReturnType<typeof ensureAdmin>>): Promis
 }
 
 export const adminOverview = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .handler(async ({ context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const gifts = await computeGifts(db);
     const { data: guests } = await db.from("guests").select("id");
     const { data: reservations } = await db
@@ -103,11 +91,11 @@ export const adminOverview = createServerFn({ method: "GET" })
 /* ---------------------------------- Presentes --------------------------------- */
 
 export const adminListGifts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => computeGifts(await ensureAdmin(context as Ctx)));
+  .middleware([requireMaster])
+  .handler(async ({ context }) => computeGifts(await ensureAdmin()));
 
 export const adminSaveGift = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -118,7 +106,7 @@ export const adminSaveGift = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     if (data.id) {
       const gifts = await computeGifts(db);
       const current = gifts.find((g) => g.id === data.id);
@@ -140,10 +128,10 @@ export const adminSaveGift = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteGift = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const { error } = await db.from("gifts").delete().eq("id", data.id);
     if (error) return { ok: false, error: "Este presente já foi escolhido por alguém." };
     return { ok: true };
@@ -152,9 +140,9 @@ export const adminDeleteGift = createServerFn({ method: "POST" })
 /* --------------------------------- Convidados --------------------------------- */
 
 export const adminListGuests = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .handler(async ({ context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const { data: guests, error } = await db
       .from("guests")
       .select("id, name, whatsapp, token, created_at")
@@ -169,7 +157,7 @@ export const adminListGuests = createServerFn({ method: "GET" })
   });
 
 export const adminSaveGuest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -180,7 +168,7 @@ export const adminSaveGuest = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const payload = { name: data.name, whatsapp: data.whatsapp || null };
     if (data.id) {
       const { error } = await db.from("guests").update(payload).eq("id", data.id);
@@ -193,10 +181,10 @@ export const adminSaveGuest = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteGuest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const { error } = await db.from("guests").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
@@ -205,9 +193,9 @@ export const adminDeleteGuest = createServerFn({ method: "POST" })
 /* ---------------------------------- Escolhas ---------------------------------- */
 
 export const adminListReservations = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .handler(async ({ context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const { data, error } = await db
       .from("reservations")
       .select(
@@ -232,7 +220,7 @@ export const adminListReservations = createServerFn({ method: "GET" })
   });
 
 export const adminSetReservationItem = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -243,7 +231,7 @@ export const adminSetReservationItem = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     const { data: result, error } = await db.rpc("admin_set_reservation_item", {
       _reservation_id: data.reservationId,
       _gift_id: data.giftId,
@@ -258,7 +246,7 @@ export const adminSetReservationItem = createServerFn({ method: "POST" })
   });
 
 export const adminSetReservationStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireMaster])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -268,7 +256,7 @@ export const adminSetReservationStatus = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin(context as Ctx);
+    const db = await ensureAdmin();
     if (data.status === "confirmed") {
       const { data: atual, error: loadError } = await db
         .from("reservations")
@@ -297,41 +285,34 @@ export const adminSetReservationStatus = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/* ------------------------------ Primeiro acesso ------------------------------ */
+/* ------------------------------ Login master ------------------------------ */
 
-/** Informa se a conta do casal já existe (usado na tela de entrada). */
-export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const { ensureMasterAdmin } = await import("@/lib/admin-seed.server");
-    await ensureMasterAdmin();
-  } catch (error) {
-    console.error("[admin] não foi possível garantir a conta master", error);
-  }
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
-  return { exists: (data?.length ?? 0) > 0 };
+export const adminSession = createServerFn({ method: "GET" }).handler(async () => {
+  const { hasMasterCookie } = await import("@/lib/admin-auth.server");
+  return { ok: hasMasterCookie() };
 });
 
-/** Cria a conta do casal apenas enquanto nenhum administrador existir. */
-export const adminBootstrap = createServerFn({ method: "POST" })
+export const adminLogin = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ email: z.string().email(), password: z.string().min(8).max(72) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin");
-    if ((existing?.length ?? 0) > 0) return { ok: false, error: "A conta do casal já existe." };
-
-    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
-      email_confirm: true,
-    });
-    if (error || !created.user) return { ok: false, error: "Não foi possível criar a conta." };
-
-    await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: "admin" });
-    return { ok: true };
+    const auth = await import("@/lib/admin-auth.server");
+    if (!auth.credentialsMatch(data.email, data.password)) {
+      return { ok: false as const, error: "E-mail ou senha incorretos." };
+    }
+    auth.setMasterCookie();
+    try {
+      const { ensureMasterAdmin } = await import("@/lib/admin-seed.server");
+      await ensureMasterAdmin();
+    } catch (error) {
+      console.error("[admin] seed opcional após login", error);
+    }
+    return { ok: true as const };
   });
+
+export const adminLogout = createServerFn({ method: "POST" }).handler(async () => {
+  const { clearMasterCookie } = await import("@/lib/admin-auth.server");
+  clearMasterCookie();
+  return { ok: true as const };
+});
