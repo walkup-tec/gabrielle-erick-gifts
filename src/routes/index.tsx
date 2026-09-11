@@ -5,7 +5,8 @@ import { useMemo, useState } from "react";
 import { Gift, Minus, Plus, Loader2, X, Heart, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
-import heroImg from "@/assets/imagem-fundo.png";
+import heroDesktop from "@/assets/imagem-fundo.png";
+import heroMobile from "@/assets/imagem-fundo-mobile.png";
 import fotoMeio from "@/assets/card01.png";
 import { Ramo } from "@/components/site/Decor";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "GIFTS-UNIT-SEED-20260911" },
+      { name: "x-deploy-marker", content: "HERO-MOBILE-PREVIOUS-20260911" },
     ],
   }),
   component: Convite,
@@ -86,8 +87,15 @@ function Convite() {
 
 function Hero({ temLista }: { temLista?: boolean }) {
   return (
-    <header className="relative overflow-hidden" data-deploy="HERO-COVER-62VH-1980x1024">
-      <img src={heroImg} alt="" className="h-[62vh] min-h-[380px] w-full object-cover" />
+    <header className="relative overflow-hidden" data-deploy="HERO-MOBILE-PREVIOUS-COLLAGE">
+      <picture>
+        <source media="(min-width: 1024px)" srcSet={heroDesktop} />
+        <img
+          src={heroMobile}
+          alt=""
+          className="h-[62vh] min-h-[380px] w-full object-cover object-center"
+        />
+      </picture>
       <div className="absolute inset-0 bg-gradient-to-b from-forest/25 via-forest/35 to-forest/85" />
       <div className="absolute inset-x-0 bottom-0 px-6 pb-9 text-center text-primary-foreground">
         <p className="font-display text-lg tracking-[0.35em] uppercase opacity-90">
