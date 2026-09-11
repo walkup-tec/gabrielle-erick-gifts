@@ -81,5 +81,8 @@ export const site = {
     texto:
       "Cada convidado recebe um link exclusivo com a nossa lista de presentes. Se você ainda não recebeu o seu, fale com Gabrielle e Erick.",
   },
-  footer: "Feito com carinho por Gabrielle e Erick",
+  footer: {
+    autor: "Feito com carinho por Marcelo Mozart",
+    assinatura: "O pai mais feliz do mundo :)",
+  },
 };
