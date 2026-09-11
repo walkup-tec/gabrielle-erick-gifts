@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "HERO-COVER-62VH-1980x1024" },
+      { name: "x-deploy-marker", content: "GIFTS-UNIT-SEED-20260911" },
     ],
   }),
   component: Convite,
@@ -182,7 +182,7 @@ function Agradecimento({
   repetido,
 }: {
   nome: string;
-  itens: { name: string; quantity: number }[];
+  itens: { name: string; quantity: number; unit?: string }[];
   repetido?: boolean;
 }) {
   return (
@@ -200,7 +200,9 @@ function Agradecimento({
               className="flex items-center justify-between rounded-2xl bg-secondary px-4 py-3 text-sm"
             >
               <span>{i.name}</span>
-              <span className="font-semibold">{i.quantity}x</span>
+              <span className="font-semibold">
+                {i.quantity} {i.unit ?? ""}
+              </span>
             </li>
           ))}
         </ul>
@@ -247,7 +249,7 @@ function Selecao({
   const [nomeInput, setNomeInput] = useState(nome);
   const [whats, setWhats] = useState(whatsapp ? maskWhatsapp(whatsapp) : "");
   const [enviando, setEnviando] = useState(false);
-  const [confirmado, setConfirmado] = useState<{ name: string; quantity: number }[] | null>(null);
+  const [confirmado, setConfirmado] = useState<{ name: string; quantity: number; unit?: string }[] | null>(null);
   const enviar = useServerFn(confirmReservation);
 
   const total = useMemo(
@@ -292,7 +294,7 @@ function Selecao({
         },
       });
       if (resultado.ok) {
-        setConfirmado(escolhidos.map((g) => ({ name: g.name, quantity: g.quantity })));
+        setConfirmado(escolhidos.map((g) => ({ name: g.name, quantity: g.quantity, unit: g.unit })));
         return;
       }
       if (resultado.error === "unavailable") {
@@ -342,7 +344,7 @@ function Selecao({
                   <li key={g.id} className="rounded-3xl border bg-card p-4 shadow-sm">
                     <h3 className="font-display text-xl leading-snug">{g.name}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {site.lista.querem} {g.desired} · {g.available}{" "}
+                      {g.desired} {g.unit} · {g.available}{" "}
                       {g.available === 1 ? site.lista.disponivel : site.lista.disponiveis}
                     </p>
                     {q === 0 ? (
