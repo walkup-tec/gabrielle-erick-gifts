@@ -6,9 +6,11 @@ export const site = {
   casalPorExtenso: "Gabrielle e Erick",
   evento: {
     titulo: "Chá dos Noivos",
-    dataCurta: "18 de outubro de 2026",
-    dataNumerica: "18/10/2026",
-    local: "Capela Nossa Senhora Aparecida",
+    dataCurta: "18/10/26 - 6:00 - Capela NRS Aparecida",
+    dataNumerica: "18/10/26",
+    horario: "6:00",
+    local: "Capela NRS Aparecida",
+    endereco: "Av. Rodolfo Müler, 1772 - Feitoria, São Leopoldo - RS",
   },
   casamento: {
     titulo: "Casamento",
