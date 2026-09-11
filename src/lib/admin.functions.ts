@@ -34,66 +34,86 @@ export type AdminGift = {
 };
 
 async function computeGifts(db: Awaited<ReturnType<typeof ensureAdmin>>): Promise<AdminGift[]> {
-  const { ensureInitialGifts, unitOf } = await import("@/lib/gifts-seed.server");
-  await ensureInitialGifts(db as never);
-  const withUnit = await db.from("gifts").select("id, name, desired_quantity, unit, created_at").order("name");
-  const giftsRes = withUnit.error
-    ? await db.from("gifts").select("id, name, desired_quantity, created_at").order("name")
-    : withUnit;
-  const [{ data: gifts, error: e1 }, { data: items, error: e2 }] = await Promise.all([
-    Promise.resolve(giftsRes),
-    db
-      .from("reservation_items")
-      .select("gift_id, quantity, reservations!inner(status)")
-      .eq("reservations.status", "confirmed"),
-  ]);
-  if (e1) throw e1;
-  if (e2) throw e2;
-  const reserved = new Map<string, number>();
-  for (const i of items ?? []) reserved.set(i.gift_id, (reserved.get(i.gift_id) ?? 0) + i.quantity);
+  const { ensureInitialGifts, unitOf, fromSeedGifts } = await import("@/lib/gifts-seed.server");
+  try {
+    await ensureInitialGifts(db as never);
+    const withUnit = await db.from("gifts").select("id, name, desired_quantity, unit, created_at").order("name");
+    const giftsRes = withUnit.error
+      ? await db.from("gifts").select("id, name, desired_quantity, created_at").order("name")
+      : withUnit;
+    const [{ data: gifts, error: e1 }, { data: items, error: e2 }] = await Promise.all([
+      Promise.resolve(giftsRes),
+      db
+        .from("reservation_items")
+        .select("gift_id, quantity, reservations!inner(status)")
+        .eq("reservations.status", "confirmed"),
+    ]);
+    if (e1) throw e1;
+    if (e2) throw e2;
+    if (!gifts?.length) return fromSeedGifts();
+    const reserved = new Map<string, number>();
+    for (const i of items ?? []) reserved.set(i.gift_id, (reserved.get(i.gift_id) ?? 0) + i.quantity);
 
-  return (gifts ?? []).map((g) => {
-    const r = reserved.get(g.id) ?? 0;
-    const available = Math.max(0, g.desired_quantity - r);
-    return {
-      id: g.id,
-      name: g.name,
-      desired: g.desired_quantity,
-      unit: unitOf(g.name, "unit" in g ? g.unit : null),
-      reserved: r,
-      available,
-      status:
-        available === 0
-          ? ("Quantidade concluída" as const)
-          : r > 0
-            ? ("Parcialmente presenteado" as const)
-            : ("Disponível" as const),
-      created_at: g.created_at,
-    };
-  });
+    return gifts.map((g) => {
+      const r = reserved.get(g.id) ?? 0;
+      const available = Math.max(0, g.desired_quantity - r);
+      return {
+        id: g.id,
+        name: g.name,
+        desired: g.desired_quantity,
+        unit: unitOf(g.name, "unit" in g ? g.unit : null),
+        reserved: r,
+        available,
+        status:
+          available === 0
+            ? ("Quantidade concluída" as const)
+            : r > 0
+              ? ("Parcialmente presenteado" as const)
+              : ("Disponível" as const),
+        created_at: g.created_at,
+      };
+    });
+  } catch (error) {
+    console.error("[admin] usando lista inicial de presentes", error);
+    return fromSeedGifts();
+  }
 }
 
 export const adminOverview = createServerFn({ method: "GET" })
   .middleware([requireMaster])
-  .handler(async ({ context }) => {
-    const db = await ensureAdmin();
-    const gifts = await computeGifts(db);
-    const { data: guests } = await db.from("guests").select("id");
-    const { data: reservations } = await db
-      .from("reservations")
-      .select("guest_id, status")
-      .eq("status", "confirmed");
-
-    const escolheram = new Set((reservations ?? []).map((r) => r.guest_id));
-    return {
-      totalGifts: gifts.length,
-      giftsAvailable: gifts.filter((g) => g.available > 0).length,
-      giftsDone: gifts.filter((g) => g.available === 0).length,
-      totalGuests: guests?.length ?? 0,
-      guestsChosen: escolheram.size,
-      guestsPending: (guests?.length ?? 0) - escolheram.size,
-      totalReservations: reservations?.length ?? 0,
-    };
+  .handler(async () => {
+    const { fromSeedGifts } = await import("@/lib/gifts-seed.server");
+    try {
+      const db = await ensureAdmin();
+      const gifts = await computeGifts(db);
+      const { data: guests } = await db.from("guests").select("id");
+      const { data: reservations } = await db
+        .from("reservations")
+        .select("guest_id, status")
+        .eq("status", "confirmed");
+      const escolheram = new Set((reservations ?? []).map((r) => r.guest_id));
+      return {
+        totalGifts: gifts.length,
+        giftsAvailable: gifts.filter((g) => g.available > 0).length,
+        giftsDone: gifts.filter((g) => g.available === 0).length,
+        totalGuests: guests?.length ?? 0,
+        guestsChosen: escolheram.size,
+        guestsPending: (guests?.length ?? 0) - escolheram.size,
+        totalReservations: reservations?.length ?? 0,
+      };
+    } catch (error) {
+      console.error("[admin] overview fallback", error);
+      const gifts = fromSeedGifts();
+      return {
+        totalGifts: gifts.length,
+        giftsAvailable: gifts.filter((g) => g.available > 0).length,
+        giftsDone: gifts.filter((g) => g.available === 0).length,
+        totalGuests: 0,
+        guestsChosen: 0,
+        guestsPending: 0,
+        totalReservations: 0,
+      };
+    }
   });
 
 /* ---------------------------------- Presentes --------------------------------- */
