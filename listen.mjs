@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
+import { networkInterfaces } from "node:os";
 
 function loadEnv(file) {
   if (!existsSync(file)) return;
@@ -35,6 +36,12 @@ console.log("[gabrielle] starting", {
   NITRO_PORT: process.env.NITRO_PORT,
   HOST: process.env.HOST,
   ports,
+  ifaces: Object.fromEntries(
+    Object.entries(networkInterfaces()).map(([name, addrs]) => [
+      name,
+      (addrs || []).map((a) => `${a.family} ${a.address}`),
+    ]),
+  ),
 });
 
 globalThis.__srvxLoader__ = ({ server }) => {
@@ -46,6 +53,7 @@ globalThis.__srvxLoader__ = ({ server }) => {
 
   const handler = (req, res) => {
     const url = req.url || "/";
+    console.log("[gabrielle] req", req.method, url, "host=", req.headers.host);
     if (url === "/healthz" || url.startsWith("/healthz?")) {
       res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
       res.end("ok");
@@ -54,13 +62,15 @@ globalThis.__srvxLoader__ = ({ server }) => {
     return nitroHandler(req, res);
   };
 
+  // Omit host so Node/Bun dual-stack (:: and IPv4). Binding only 0.0.0.0
+  // makes Traefik 502 when it connects over IPv6 on the Docker network.
   for (const port of ports) {
     const httpServer = createServer(handler);
     httpServer.on("error", (error) => {
-      console.error(`[gabrielle] bind 0.0.0.0:${port} failed:`, error.code || error.message);
+      console.error(`[gabrielle] bind :${port} failed:`, error.code || error.message);
     });
-    httpServer.listen(port, "0.0.0.0", () => {
-      console.log(`[gabrielle] listening on http://0.0.0.0:${port}/`);
+    httpServer.listen(port, () => {
+      console.log("[gabrielle] listening", httpServer.address());
     });
   }
 };
