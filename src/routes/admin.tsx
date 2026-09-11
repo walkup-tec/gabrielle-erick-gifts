@@ -141,6 +141,7 @@ function Painel() {
     ["Convidados", data?.totalGuests],
     ["Já escolheram", data?.guestsChosen],
     ["Ainda não", data?.guestsPending],
+    ["Reservas", data?.totalReservations],
   ] as const;
 
   return (
@@ -285,6 +286,7 @@ function Presentes() {
                     Deseja {g.desired} · reservados {g.reserved} · disponíveis {g.available}
                   </p>
                   <p className="mt-1 text-xs font-medium text-primary">{g.status}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(g.created_at)}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -339,7 +341,7 @@ function Convidados() {
   const [whats, setWhats] = useState("");
 
   function linkDe(token: string) {
-    return `${window.location.origin}/?token=${token}`;
+    return `${window.location.origin}/convite/${token}`;
   }
 
   async function enviar(e: React.FormEvent) {
@@ -408,6 +410,9 @@ function Convidados() {
                 <div className="min-w-0">
                   <p className="font-medium">{c.name}</p>
                   <p className="text-xs text-muted-foreground">{c.whatsapp ?? "sem WhatsApp"}</p>
+                  {c.created_at ? (
+                    <p className="text-xs text-muted-foreground">{formatDateTime(c.created_at)}</p>
+                  ) : null}
                   <p className="mt-1 text-xs font-medium text-primary">
                     {c.chosen ? "Já escolheu" : "Ainda não escolheu"}
                   </p>
@@ -503,13 +508,29 @@ function Escolhas() {
       {(data ?? []).length === 0 && (
         <p className="text-sm text-muted-foreground">Nenhuma escolha confirmada ainda.</p>
       )}
-      {(data ?? []).map((r) => (
+      {(data ?? []).map((r) => {
+        const ativa = r.status === "confirmed";
+        return (
         <li key={r.id} className="rounded-2xl border bg-card p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-medium">{r.guestName}</p>
               <p className="text-xs text-muted-foreground">{r.whatsapp}</p>
               <p className="text-xs text-muted-foreground">{formatDateTime(r.confirmedAt)}</p>
+              {r.guestToken ? (
+                <button
+                  type="button"
+                  className="mt-1 text-xs text-primary underline-offset-2 hover:underline"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(
+                      `${window.location.origin}/convite/${r.guestToken}`,
+                    );
+                    toast.success("Link do convite copiado.");
+                  }}
+                >
+                  Copiar link do convite
+                </button>
+              ) : null}
             </div>
             <span className="rounded-full bg-secondary px-3 py-1 text-xs">
               {r.status === "confirmed" ? "Confirmada" : "Cancelada"}
@@ -525,6 +546,7 @@ function Escolhas() {
                     size="icon"
                     variant="ghost"
                     aria-label="Diminuir"
+                    disabled={!ativa}
                     onClick={() => set(r.id, i.giftId, i.quantity - 1)}
                   >
                     –
@@ -534,6 +556,7 @@ function Escolhas() {
                     size="icon"
                     variant="ghost"
                     aria-label="Aumentar"
+                    disabled={!ativa}
                     onClick={() => set(r.id, i.giftId, i.quantity + 1)}
                   >
                     +
@@ -542,6 +565,7 @@ function Escolhas() {
                     size="icon"
                     variant="ghost"
                     aria-label="Remover"
+                    disabled={!ativa}
                     onClick={() => set(r.id, i.giftId, 0)}
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
@@ -556,6 +580,7 @@ function Escolhas() {
               aria-label="Adicionar presente"
               className="rounded-full border bg-background px-3 py-2 text-sm"
               value=""
+              disabled={!ativa}
               onChange={(e) => {
                 if (e.target.value) set(r.id, e.target.value, 1);
               }}
@@ -573,12 +598,16 @@ function Escolhas() {
               variant="ghost"
               size="sm"
               onClick={async () => {
-                await mudarStatus({
+                const rStatus = await mudarStatus({
                   data: {
                     reservationId: r.id,
                     status: r.status === "confirmed" ? "cancelled" : "confirmed",
                   },
                 });
+                if (!rStatus.ok) {
+                  toast.error(rStatus.error ?? "Não foi possível atualizar a escolha.");
+                  return;
+                }
                 recarregar();
               }}
             >
@@ -586,7 +615,8 @@ function Escolhas() {
             </Button>
           </div>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
