@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["bun"]
+
+[phases.install]
+cmds = ["bun install --frozen-lockfile"]
+
+[phases.build]
+cmds = ["NITRO_PRESET=node-server bun run build"]
+
+[start]
+cmd = "HOST=0.0.0.0 NITRO_HOST=0.0.0.0 bun listen.mjs"
