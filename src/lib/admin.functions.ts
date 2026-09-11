@@ -301,6 +301,12 @@ export const adminSetReservationStatus = createServerFn({ method: "POST" })
 
 /** Informa se a conta do casal já existe (usado na tela de entrada). */
 export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { ensureMasterAdmin } = await import("@/lib/admin-seed.server");
+    await ensureMasterAdmin();
+  } catch (error) {
+    console.error("[admin] não foi possível garantir a conta master", error);
+  }
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
   return { exists: (data?.length ?? 0) > 0 };
