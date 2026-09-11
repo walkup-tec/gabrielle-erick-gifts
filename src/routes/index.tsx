@@ -203,7 +203,11 @@ function Agradecimento({
 function Rodape() {
   return (
     <footer className="border-t px-6 py-8 text-center text-xs text-muted-foreground">
-      {site.footer}
+      <p className="inline-flex flex-wrap items-center justify-center gap-1.5">
+        <span>{site.footer.autor}</span>
+        <Heart className="h-3.5 w-3.5 fill-current text-primary" aria-hidden />
+        <span>{site.footer.assinatura}</span>
+      </p>
     </footer>
   );
 }
