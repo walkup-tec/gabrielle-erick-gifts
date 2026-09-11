@@ -269,12 +269,32 @@ export const adminSetReservationStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const db = await ensureAdmin(context as Ctx);
+    if (data.status === "confirmed") {
+      const { data: atual, error: loadError } = await db
+        .from("reservations")
+        .select("status, reservation_items(gift_id, quantity)")
+        .eq("id", data.reservationId)
+        .maybeSingle();
+      if (loadError) throw loadError;
+      if (atual && atual.status !== "confirmed") {
+        const gifts = await computeGifts(db);
+        for (const item of atual.reservation_items ?? []) {
+          const gift = gifts.find((g) => g.id === item.gift_id);
+          if (!gift || gift.available < item.quantity) {
+            return {
+              ok: false as const,
+              error: "Não há unidades suficientes para reativar esta escolha.",
+            };
+          }
+        }
+      }
+    }
     const { error } = await db
       .from("reservations")
       .update({ status: data.status })
       .eq("id", data.reservationId);
     if (error) throw error;
-    return { ok: true };
+    return { ok: true as const };
   });
 
 /* ------------------------------ Primeiro acesso ------------------------------ */
