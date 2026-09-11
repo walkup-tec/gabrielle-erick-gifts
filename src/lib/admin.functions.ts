@@ -202,11 +202,24 @@ export const adminSaveGuest = createServerFn({ method: "POST" })
     if (data.id) {
       const { error } = await db.from("guests").update(payload).eq("id", data.id);
       if (error) throw error;
-    } else {
-      const { error } = await db.from("guests").insert({ ...payload, token: newToken() });
-      if (error) throw error;
+      return { ok: true as const, whatsappSent: false as const };
     }
-    return { ok: true };
+
+    const token = newToken();
+    const { error } = await db.from("guests").insert({ ...payload, token });
+    if (error) throw error;
+
+    if (!payload.whatsapp) {
+      return { ok: true as const, whatsappSent: false as const };
+    }
+
+    const { enviarConviteWhatsapp } = await import("@/lib/evolution.server");
+    const enviado = await enviarConviteWhatsapp(payload.name, payload.whatsapp, token);
+    return {
+      ok: true as const,
+      whatsappSent: enviado.ok,
+      whatsappError: enviado.ok ? undefined : enviado.error,
+    };
   });
 
 export const adminDeleteGuest = createServerFn({ method: "POST" })
