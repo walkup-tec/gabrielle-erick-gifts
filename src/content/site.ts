@@ -6,10 +6,10 @@ export const site = {
   casalPorExtenso: "Gabrielle e Erick",
   evento: {
     titulo: "Chá dos Noivos",
-    dataCurta: "18/10/26 - 6:00 - Capela NRS Aparecida",
-    dataNumerica: "18/10/26",
+    dataCurta: "18 de outubro de 2026 · 6:00",
+    dataNumerica: "18/10/2026",
     horario: "6:00",
-    local: "Capela NRS Aparecida",
+    local: "Capela Nossa Senhora Aparecida",
     endereco: "Av. Rodolfo Müler, 1772 - Feitoria, São Leopoldo - RS",
   },
   casamento: {
@@ -21,6 +21,7 @@ export const site = {
   hero: {
     convite:
       "Estamos preparando um dia cheio de carinho e queremos você por perto. Antes do grande sim, vamos celebrar juntos o começo da nossa casa.",
+    frase: "Vem celebrar com a gente o começo da nossa casa.",
     cta: "Ver lista de presentes",
   },
   saudacao: (nome: string) => `Olá, ${nome}! Que alegria ter você com a gente.`,
