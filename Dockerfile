@@ -17,13 +17,14 @@ USER root
 WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=80
 ENV NITRO_HOST=0.0.0.0
-ENV NITRO_PORT=3000
+ENV NITRO_PORT=80
 COPY --from=build /app/.output /app/.output
 COPY --from=build /app/.env /app/.env
 COPY listen.mjs /app/listen.mjs
 COPY start.sh /app/start.sh
+COPY package.json /app/package.json
 RUN chmod +x /app/start.sh
-EXPOSE 3000
+EXPOSE 80 3000
 CMD ["bun", "/app/listen.mjs"]
