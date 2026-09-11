@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime, maskWhatsapp } from "@/lib/format";
 import {
-  adminBootstrap,
   adminDeleteGift,
   adminDeleteGuest,
   adminListGifts,
@@ -55,28 +54,19 @@ function Admin() {
 }
 
 function Login() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("drax@draxsistemas.com.br");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
   const verificar = useServerFn(adminExists);
-  const criar = useServerFn(adminBootstrap);
-  const { data: existe } = useQuery({
+  const { isFetched } = useQuery({
     queryKey: ["admin", "exists"],
     queryFn: () => verificar(),
   });
-  const primeiroAcesso = existe?.exists === false;
 
   async function entrar(e: React.FormEvent) {
     e.preventDefault();
     setCarregando(true);
     try {
-      if (primeiroAcesso) {
-        const r = await criar({ data: { email, password: senha } });
-        if (!r.ok) {
-          toast.error(r.error ?? "Não foi possível criar a conta.");
-          return;
-        }
-      }
       const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
       if (error) toast.error("E-mail ou senha incorretos.");
     } finally {
@@ -89,9 +79,7 @@ function Login() {
       <form onSubmit={entrar} className="w-full max-w-sm rounded-3xl border bg-card p-7 shadow-sm">
         <h1 className="text-center font-display text-3xl">Área do casal</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          {primeiroAcesso
-            ? "Primeiro acesso: escolha o e-mail e a senha de vocês (mínimo de 8 caracteres)."
-            : "Entre para cuidar da lista de presentes."}
+          Entre para cuidar da lista de presentes.
         </p>
         <div className="mt-6 space-y-4">
           <div>
@@ -114,18 +102,17 @@ function Login() {
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               className="mt-1.5"
-              autoComplete={primeiroAcesso ? "new-password" : "current-password"}
+              autoComplete="current-password"
               minLength={8}
               required
             />
           </div>
         </div>
-        <Button type="submit" className="mt-6 w-full rounded-full" disabled={carregando}>
-          {carregando ? "Aguarde..." : primeiroAcesso ? "Criar conta e entrar" : "Entrar"}
+        <Button type="submit" className="mt-6 w-full rounded-full" disabled={carregando || !isFetched}>
+          {carregando ? "Aguarde..." : "Entrar"}
         </Button>
       </form>
     </main>
-
   );
 }
 
