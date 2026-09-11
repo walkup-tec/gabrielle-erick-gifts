@@ -28,6 +28,7 @@ export type PublicGift = {
 export type InviteData = {
   found: boolean;
   guestName?: string;
+  guestWhatsapp?: string;
   gifts: PublicGift[];
   reservation?: {
     confirmedAt: string;
@@ -67,7 +68,7 @@ export const getInvite = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: guest } = await supabaseAdmin
       .from("guests")
-      .select("id, name")
+      .select("id, name, whatsapp")
       .eq("token", data.token)
       .maybeSingle();
 
@@ -84,6 +85,7 @@ export const getInvite = createServerFn({ method: "GET" })
       return {
         found: true,
         guestName: guest.name,
+        guestWhatsapp: guest.whatsapp ?? undefined,
         gifts: [],
         reservation: {
           confirmedAt: reservation.confirmed_at,
@@ -99,6 +101,7 @@ export const getInvite = createServerFn({ method: "GET" })
     return {
       found: true,
       guestName: guest.name,
+      guestWhatsapp: guest.whatsapp ?? undefined,
       reservation: null,
       gifts: gifts
         .filter((g) => g.available > 0)
@@ -106,14 +109,21 @@ export const getInvite = createServerFn({ method: "GET" })
     };
   });
 
-export const listAvailableGifts = createServerFn({ method: "GET" }).handler(
-  async (): Promise<PublicGift[]> => {
+export const listAvailableGifts = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => tokenSchema.parse(data))
+  .handler(async ({ data }): Promise<PublicGift[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: guest } = await supabaseAdmin
+      .from("guests")
+      .select("id")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (!guest) return [];
     const gifts = await loadGifts();
     return gifts
       .filter((g) => g.available > 0)
       .map(({ id, name, desired, available }) => ({ id, name, desired, available }));
-  },
-);
+  });
 
 export const confirmReservation = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => itemsSchema.parse(data))
