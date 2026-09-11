@@ -8,22 +8,33 @@ function evoConfig() {
 }
 
 async function postJson(path: string, body: unknown, key: string) {
-  const response = await fetch(path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: key,
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await response.text();
-  let json: unknown = null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    json = { raw: text };
+    const response = await fetch(path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: key,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    let json: unknown = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = { raw: text };
+    }
+    return { ok: response.ok, status: response.status, json };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "timeout";
+    console.error("[evo] falha de rede", path, message);
+    return { ok: false, status: 0, json: { error: message } };
+  } finally {
+    clearTimeout(timer);
   }
-  return { ok: response.ok, status: response.status, json };
 }
 
 export async function enviarConviteWhatsapp(nome: string, whatsapp: string, token: string) {
@@ -38,14 +49,14 @@ export async function enviarConviteWhatsapp(nome: string, whatsapp: string, toke
   const text = mensagemConviteWhatsapp(nome, linkConvite(token));
   const endpoint = `${url}/message/sendText/${encodeURIComponent(instance)}`;
 
-  const v2 = await postJson(endpoint, { number, text, delay: 1200, linkPreview: true }, key);
+  const v2 = await postJson(endpoint, { number, text, delay: 0, linkPreview: true }, key);
   if (v2.ok) return { ok: true as const };
 
   const v1 = await postJson(
     endpoint,
     {
       number,
-      options: { delay: 1200, presence: "composing", linkPreview: true },
+      options: { delay: 0, presence: "composing", linkPreview: true },
       textMessage: { text },
     },
     key,
@@ -54,4 +65,13 @@ export async function enviarConviteWhatsapp(nome: string, whatsapp: string, toke
 
   console.error("[evo] falha ao enviar convite", v2.status, v2.json, v1.status, v1.json);
   return { ok: false as const, error: "Não foi possível enviar o WhatsApp agora." };
+}
+
+export async function tentarEnviarConviteWhatsapp(nome: string, whatsapp: string, token: string) {
+  try {
+    return await enviarConviteWhatsapp(nome, whatsapp, token);
+  } catch (error) {
+    console.error("[evo] erro inesperado", error);
+    return { ok: false as const, error: "Não foi possível enviar o WhatsApp agora." };
+  }
 }
