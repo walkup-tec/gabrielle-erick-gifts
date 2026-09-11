@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "ADMIN-LOGIN-COOKIE-20260911" },
+      { name: "x-deploy-marker", content: "GIFTS-UNIT-SEED-20260911" },
     ],
   }),
   component: Admin,
@@ -201,10 +201,13 @@ function Presentes() {
   const [id, setId] = useState<string | undefined>();
   const [nome, setNome] = useState("");
   const [qtd, setQtd] = useState("1");
+  const [unidade, setUnidade] = useState("Item");
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const r = await salvar({ data: { id, name: nome.trim(), desired: Number(qtd) || 1 } });
+    const r = await salvar({
+      data: { id, name: nome.trim(), desired: Number(qtd) || 1, unit: unidade.trim() || "Item" },
+    });
     if (!r.ok) {
       toast.error(r.error ?? "Não foi possível salvar.");
       return;
@@ -213,6 +216,7 @@ function Presentes() {
     setId(undefined);
     setNome("");
     setQtd("1");
+    setUnidade("Item");
     recarregar();
   }
 
@@ -241,6 +245,21 @@ function Presentes() {
               className="mt-1.5"
             />
           </div>
+          <div className="w-full sm:w-32">
+            <Label htmlFor="g-unidade">Unidade</Label>
+            <Input
+              id="g-unidade"
+              value={unidade}
+              onChange={(e) => setUnidade(e.target.value)}
+              className="mt-1.5"
+              list="g-unidade-opcoes"
+              required
+            />
+            <datalist id="g-unidade-opcoes">
+              <option value="Item" />
+              <option value="Kit" />
+            </datalist>
+          </div>
         </div>
         <div className="mt-3 flex gap-2">
           <Button type="submit" className="rounded-full">
@@ -254,6 +273,7 @@ function Presentes() {
                 setId(undefined);
                 setNome("");
                 setQtd("1");
+                setUnidade("Item");
               }}
             >
               Cancelar
@@ -272,7 +292,7 @@ function Presentes() {
                 <div>
                   <p className="font-medium">{g.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Deseja {g.desired} · reservados {g.reserved} · disponíveis {g.available}
+                    {g.desired} {g.unit} · reservados {g.reserved} · disponíveis {g.available}
                   </p>
                   <p className="mt-1 text-xs font-medium text-primary">{g.status}</p>
                   <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(g.created_at)}</p>
@@ -286,6 +306,7 @@ function Presentes() {
                       setId(g.id);
                       setNome(g.name);
                       setQtd(String(g.desired));
+                      setUnidade(g.unit);
                     }}
                   >
                     <Pencil className="h-4 w-4" aria-hidden />
