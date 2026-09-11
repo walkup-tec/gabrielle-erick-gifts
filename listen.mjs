@@ -62,14 +62,14 @@ globalThis.__srvxLoader__ = ({ server }) => {
     return nitroHandler(req, res);
   };
 
-  // Omit host so Node/Bun dual-stack (:: and IPv4). Binding only 0.0.0.0
-  // makes Traefik 502 when it connects over IPv6 on the Docker network.
+  // This EasyPanel container only has IPv4 addresses. Binding "::" makes
+  // Traefik's IPv4 probes fail with 502. Listen on 0.0.0.0 (all IPv4 NICs).
   for (const port of ports) {
     const httpServer = createServer(handler);
     httpServer.on("error", (error) => {
-      console.error(`[gabrielle] bind :${port} failed:`, error.code || error.message);
+      console.error(`[gabrielle] bind 0.0.0.0:${port} failed:`, error.code || error.message);
     });
-    httpServer.listen(port, () => {
+    httpServer.listen(port, "0.0.0.0", () => {
       console.log("[gabrielle] listening", httpServer.address());
     });
   }
