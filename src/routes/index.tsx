@@ -101,8 +101,11 @@ function Hero() {
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{site.evento.endereco}</span>
         </p>
-        <a href="#lista">
-          <Button className="mt-6 rounded-full px-7" size="lg">
+        <a href="#lista" className="mt-6 inline-flex">
+          <Button
+            size="lg"
+            className="h-11 rounded-full px-8 text-[15px] font-semibold shadow-[0_8px_32px_rgba(255,255,255,0.4)] ring-2 ring-secondary ring-offset-2 ring-offset-forest/70 hover:bg-primary hover:shadow-[0_12px_40px_rgba(255,255,255,0.55)]"
+          >
             {site.hero.cta}
           </Button>
         </a>
