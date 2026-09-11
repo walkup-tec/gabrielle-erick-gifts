@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 import { Gift, Minus, Plus, Loader2, X, Heart, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
-import heroImg from "@/assets/casal-hero.jpg";
-import fotoMeio from "@/assets/casal-3.jpg";
+import heroImg from "@/assets/imagem-fundo.png";
+import fotoMeio from "@/assets/card01.png";
 import { Ramo } from "@/components/site/Decor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,7 +87,7 @@ function Hero() {
     <header className="relative overflow-hidden">
       <img
         src={heroImg}
-        alt="Gabrielle e Erick de mãos dadas"
+        alt="Gabrielle e Erick"
         className="h-[62vh] min-h-[380px] w-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-forest/25 via-forest/35 to-forest/85" />
