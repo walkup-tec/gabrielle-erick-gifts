@@ -26,6 +26,7 @@ export type AdminGift = {
   id: string;
   name: string;
   desired: number;
+  unit: string;
   reserved: number;
   available: number;
   status: "Disponível" | "Parcialmente presenteado" | "Quantidade concluída";
@@ -33,8 +34,14 @@ export type AdminGift = {
 };
 
 async function computeGifts(db: Awaited<ReturnType<typeof ensureAdmin>>): Promise<AdminGift[]> {
+  const { ensureInitialGifts, unitOf } = await import("@/lib/gifts-seed.server");
+  await ensureInitialGifts(db as never);
+  const withUnit = await db.from("gifts").select("id, name, desired_quantity, unit, created_at").order("name");
+  const giftsRes = withUnit.error
+    ? await db.from("gifts").select("id, name, desired_quantity, created_at").order("name")
+    : withUnit;
   const [{ data: gifts, error: e1 }, { data: items, error: e2 }] = await Promise.all([
-    db.from("gifts").select("id, name, desired_quantity, created_at").order("name"),
+    Promise.resolve(giftsRes),
     db
       .from("reservation_items")
       .select("gift_id, quantity, reservations!inner(status)")
@@ -52,6 +59,7 @@ async function computeGifts(db: Awaited<ReturnType<typeof ensureAdmin>>): Promis
       id: g.id,
       name: g.name,
       desired: g.desired_quantity,
+      unit: unitOf(g.name, "unit" in g ? g.unit : null),
       reserved: r,
       available,
       status:
@@ -102,6 +110,7 @@ export const adminSaveGift = createServerFn({ method: "POST" })
         id: z.string().uuid().optional(),
         name: z.string().trim().min(2).max(120),
         desired: z.number().int().min(1).max(999),
+        unit: z.string().trim().min(1).max(30),
       })
       .parse(d),
   )
@@ -115,13 +124,13 @@ export const adminSaveGift = createServerFn({ method: "POST" })
       }
       const { error } = await db
         .from("gifts")
-        .update({ name: data.name, desired_quantity: data.desired })
+        .update({ name: data.name, desired_quantity: data.desired, unit: data.unit })
         .eq("id", data.id);
       if (error) throw error;
     } else {
       const { error } = await db
         .from("gifts")
-        .insert({ name: data.name, desired_quantity: data.desired });
+        .insert({ name: data.name, desired_quantity: data.desired, unit: data.unit });
       if (error) throw error;
     }
     return { ok: true };
