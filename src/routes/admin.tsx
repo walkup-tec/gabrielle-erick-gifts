@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, LogOut, Pencil, Trash2, Share2 } from "lucide-react";
+import { Copy, LogOut, Pencil, Search, Share2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "GIFTS-FALLBACK-20260911" },
+      { name: "x-deploy-marker", content: "ADMIN-SEARCH-20260911" },
     ],
   }),
   component: Admin,
@@ -189,6 +189,50 @@ function useRecarregar() {
   return () => qc.invalidateQueries({ queryKey: ["admin"] });
 }
 
+function normalizar(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function corresponde(busca: string, ...campos: Array<string | number | null | undefined>) {
+  const q = normalizar(busca);
+  if (!q) return true;
+  return campos.some((campo) => campo != null && normalizar(String(campo)).includes(q));
+}
+
+function CampoPesquisa({
+  id,
+  valor,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  valor: string;
+  onChange: (valor: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
+      <Input
+        id={id}
+        type="search"
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="pl-9"
+        autoComplete="off"
+      />
+    </div>
+  );
+}
+
 /* --------------------------------- Presentes -------------------------------- */
 
 function Presentes() {
@@ -202,6 +246,14 @@ function Presentes() {
   const [nome, setNome] = useState("");
   const [qtd, setQtd] = useState("1");
   const [unidade, setUnidade] = useState("Item");
+  const [busca, setBusca] = useState("");
+  const filtrados = useMemo(
+    () =>
+      (data ?? []).filter((g) =>
+        corresponde(busca, g.name, g.unit, g.status, g.desired, g.available),
+      ),
+    [data, busca],
+  );
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -282,11 +334,22 @@ function Presentes() {
         </div>
       </form>
 
+      <CampoPesquisa
+        id="g-busca"
+        valor={busca}
+        onChange={setBusca}
+        placeholder="Pesquisar presente..."
+      />
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {busca.trim() ? "Nenhum presente encontrado." : "Nenhum presente cadastrado."}
+        </p>
       ) : (
         <ul className="space-y-2">
-          {(data ?? []).map((g) => (
+          {filtrados.map((g) => (
             <li key={g.id} className="rounded-2xl border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -351,6 +414,14 @@ function Convidados() {
   const [id, setId] = useState<string | undefined>();
   const [nome, setNome] = useState("");
   const [whats, setWhats] = useState("");
+  const [busca, setBusca] = useState("");
+  const filtrados = useMemo(
+    () =>
+      (data ?? []).filter((c) =>
+        corresponde(busca, c.name, c.whatsapp, c.chosen ? "Já escolheu" : "Ainda não escolheu"),
+      ),
+    [data, busca],
+  );
 
   function linkDe(token: string) {
     return `${window.location.origin}/convite/${token}`;
@@ -412,11 +483,22 @@ function Convidados() {
         </div>
       </form>
 
+      <CampoPesquisa
+        id="c-busca"
+        valor={busca}
+        onChange={setBusca}
+        placeholder="Pesquisar convidado..."
+      />
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : filtrados.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {busca.trim() ? "Nenhum convidado encontrado." : "Nenhum convidado cadastrado."}
+        </p>
       ) : (
         <ul className="space-y-2">
-          {(data ?? []).map((c) => (
+          {filtrados.map((c) => (
             <li key={c.id} className="rounded-2xl border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -495,6 +577,7 @@ function Escolhas() {
   const ajustar = useServerFn(adminSetReservationItem);
   const mudarStatus = useServerFn(adminSetReservationStatus);
   const recarregar = useRecarregar();
+  const [busca, setBusca] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "reservations"],
     queryFn: () => listar(),
@@ -503,6 +586,19 @@ function Escolhas() {
     queryKey: ["admin", "gifts"],
     queryFn: () => listarPresentes(),
   });
+  const filtrados = useMemo(
+    () =>
+      (data ?? []).filter((r) =>
+        corresponde(
+          busca,
+          r.guestName,
+          r.whatsapp,
+          r.status === "confirmed" ? "Confirmada" : "Cancelada",
+          ...r.items.map((i) => i.name),
+        ),
+      ),
+    [data, busca],
+  );
 
   async function set(reservationId: string, giftId: string, quantity: number) {
     const r = await ajustar({ data: { reservationId, giftId, quantity } });
@@ -516,11 +612,20 @@ function Escolhas() {
   if (isLoading) return <p className="mt-4 text-sm text-muted-foreground">Carregando...</p>;
 
   return (
-    <ul className="mt-4 space-y-3">
-      {(data ?? []).length === 0 && (
-        <p className="text-sm text-muted-foreground">Nenhuma escolha confirmada ainda.</p>
+    <div className="mt-4 space-y-3">
+      <CampoPesquisa
+        id="e-busca"
+        valor={busca}
+        onChange={setBusca}
+        placeholder="Pesquisar escolha..."
+      />
+      <ul className="space-y-3">
+      {filtrados.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          {busca.trim() ? "Nenhuma escolha encontrada." : "Nenhuma escolha confirmada ainda."}
+        </p>
       )}
-      {(data ?? []).map((r) => {
+      {filtrados.map((r) => {
         const ativa = r.status === "confirmed";
         return (
         <li key={r.id} className="rounded-2xl border bg-card p-4">
@@ -630,5 +735,6 @@ function Escolhas() {
         );
       })}
     </ul>
+    </div>
   );
 }
