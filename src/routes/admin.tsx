@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, LogOut, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Copy, Loader2, LogOut, Pencil, Search, Share2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "EVO-WHATSAPP-INVITE-20260911" },
+      { name: "x-deploy-marker", content: "GUEST-SAVE-FALLBACK-20260911" },
     ],
   }),
   component: Admin,
@@ -415,6 +415,7 @@ function Convidados() {
   const [nome, setNome] = useState("");
   const [whats, setWhats] = useState("");
   const [busca, setBusca] = useState("");
+  const [salvando, setSalvando] = useState(false);
   const filtrados = useMemo(
     () =>
       (data ?? []).filter((c) =>
@@ -429,20 +430,32 @@ function Convidados() {
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const r = await salvar({ data: { id, name: nome.trim(), whatsapp: whats || null } });
-    if (id) {
-      toast.success("Convidado salvo.");
-    } else if (r.whatsappSent) {
-      toast.success("Convidado salvo. Convite enviado no WhatsApp.");
-    } else if (whats.trim()) {
-      toast.error(r.whatsappError ?? "Convidado salvo, mas o WhatsApp não foi enviado.");
-    } else {
-      toast.success("Convidado salvo. Sem WhatsApp, o convite não foi enviado.");
+    setSalvando(true);
+    try {
+      const r = await salvar({ data: { id, name: nome.trim(), whatsapp: whats || null } });
+      if (!r?.ok) {
+        toast.error((r && "error" in r && r.error) || "Não foi possível salvar o convidado.");
+        return;
+      }
+      if (id) {
+        toast.success("Convidado salvo.");
+      } else if (r.whatsappSent) {
+        toast.success("Convidado salvo. Convite enviado no WhatsApp.");
+      } else if (whats.trim()) {
+        toast.error(r.whatsappError ?? "Convidado salvo, mas o WhatsApp não foi enviado.");
+      } else {
+        toast.success("Convidado salvo. Sem WhatsApp, o convite não foi enviado.");
+      }
+      setId(undefined);
+      setNome("");
+      setWhats("");
+      recarregar();
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível salvar o convidado. Tente de novo.");
+    } finally {
+      setSalvando(false);
     }
-    setId(undefined);
-    setNome("");
-    setWhats("");
-    recarregar();
   }
 
   return (
@@ -472,8 +485,9 @@ function Convidados() {
           </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button type="submit" className="rounded-full">
-            {id ? "Salvar alterações" : "Adicionar convidado"}
+          <Button type="submit" className="rounded-full" disabled={salvando}>
+            {salvando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+            {id ? "Salvar alterações" : salvando ? "Salvando..." : "Adicionar convidado"}
           </Button>
           {id && (
             <Button
