@@ -88,12 +88,8 @@ function Convite() {
 
 function Hero({ temLista }: { temLista?: boolean }) {
   return (
-    <header className="relative overflow-hidden bg-background">
-      <img
-        src={heroImg}
-        alt="Gabrielle e Erick"
-        className="h-[62vh] min-h-[380px] w-full object-cover object-center lg:h-[min(90vh,calc(100vw*1024/1280))] lg:min-h-0 lg:object-contain"
-      />
+    <header className="relative overflow-hidden">
+      <img src={heroImg} alt="" className="h-[62vh] min-h-[380px] w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-b from-forest/25 via-forest/35 to-forest/85" />
       <div className="absolute inset-x-0 bottom-0 px-6 pb-9 text-center text-primary-foreground">
         <p className="font-display text-lg tracking-[0.35em] uppercase opacity-90">
