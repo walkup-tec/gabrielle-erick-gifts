@@ -34,6 +34,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
+      { name: "x-deploy-marker", content: "ADMIN-MASTER-DRAX-20260911" },
     ],
   }),
   component: Admin,
@@ -75,7 +76,7 @@ function Login() {
   }
 
   return (
-    <main className="folha-bg flex min-h-screen items-center justify-center px-6">
+    <main className="folha-bg flex min-h-screen items-center justify-center px-6" data-deploy="ADMIN-MASTER-DRAX-20260911">
       <form onSubmit={entrar} className="w-full max-w-sm rounded-3xl border bg-card p-7 shadow-sm">
         <h1 className="text-center font-display text-3xl">Área do casal</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
