@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Gift, Minus, Plus, Loader2, X, Heart } from "lucide-react";
+import { Gift, Minus, Plus, Loader2, X, Heart, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 import heroImg from "@/assets/casal-hero.jpg";
@@ -96,8 +96,10 @@ function Hero() {
           {site.evento.titulo}
         </p>
         <h1 className="mt-2 font-display text-5xl leading-tight sm:text-6xl">{site.casal}</h1>
-        <p className="mt-3 text-sm opacity-90">
-          {site.evento.dataCurta} · {site.evento.local}
+        <p className="mt-3 text-sm opacity-90">{site.evento.dataCurta}</p>
+        <p className="mx-auto mt-1.5 flex max-w-lg items-start justify-center gap-1.5 text-sm opacity-90">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{site.evento.endereco}</span>
         </p>
         <a href="#lista">
           <Button className="mt-6 rounded-full px-7" size="lg">
