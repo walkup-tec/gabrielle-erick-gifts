@@ -306,6 +306,26 @@ export const adminDeleteGuest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminSendGuestInvite = createServerFn({ method: "POST" })
+  .middleware([requireMaster])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const local = await import("@/lib/local-store.server");
+    const guest = await local.findGuestById(data.id);
+    if (!guest) {
+      return { ok: false as const, error: "Convidado não encontrado." };
+    }
+    if (!guest.whatsapp) {
+      return { ok: false as const, error: "Este convidado não tem WhatsApp." };
+    }
+    const { tentarEnviarConviteWhatsapp } = await import("@/lib/evolution.server");
+    const enviado = await tentarEnviarConviteWhatsapp(guest.name, guest.whatsapp, guest.token);
+    if (!enviado.ok) {
+      return { ok: false as const, error: enviado.error };
+    }
+    return { ok: true as const };
+  });
+
 /* ---------------------------------- Escolhas ---------------------------------- */
 
 export const adminListReservations = createServerFn({ method: "GET" })
