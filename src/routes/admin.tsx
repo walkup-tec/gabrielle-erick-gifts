@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "GIFTS-UNIT-SEED-20260911" },
+      { name: "x-deploy-marker", content: "GIFTS-FALLBACK-20260911" },
     ],
   }),
   component: Admin,
@@ -295,7 +295,9 @@ function Presentes() {
                     {g.desired} {g.unit} · reservados {g.reserved} · disponíveis {g.available}
                   </p>
                   <p className="mt-1 text-xs font-medium text-primary">{g.status}</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(g.created_at)}</p>
+                  {g.created_at ? (
+                    <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(g.created_at)}</p>
+                  ) : null}
                 </div>
                 <div className="flex gap-1">
                   <Button
