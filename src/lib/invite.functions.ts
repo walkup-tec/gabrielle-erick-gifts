@@ -22,6 +22,7 @@ export type PublicGift = {
   id: string;
   name: string;
   desired: number;
+  unit: string;
   available: number;
 };
 
@@ -32,15 +33,21 @@ export type InviteData = {
   gifts: PublicGift[];
   reservation?: {
     confirmedAt: string;
-    items: { name: string; quantity: number }[];
+    items: { name: string; quantity: number; unit?: string }[];
   } | null;
 };
 
 async function loadGifts() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { ensureInitialGifts, unitOf } = await import("@/lib/gifts-seed.server");
+  await ensureInitialGifts(supabaseAdmin as never);
+  const withUnit = await supabaseAdmin.from("gifts").select("id, name, desired_quantity, unit").order("name");
+  const giftsQuery = withUnit.error
+    ? await supabaseAdmin.from("gifts").select("id, name, desired_quantity").order("name")
+    : withUnit;
   const [{ data: gifts, error: giftsError }, { data: items, error: itemsError }] =
     await Promise.all([
-      supabaseAdmin.from("gifts").select("id, name, desired_quantity").order("name"),
+      Promise.resolve(giftsQuery),
       supabaseAdmin
         .from("reservation_items")
         .select("gift_id, quantity, reservations!inner(status)")
@@ -57,6 +64,7 @@ async function loadGifts() {
     id: g.id,
     name: g.name,
     desired: g.desired_quantity,
+    unit: unitOf(g.name, "unit" in g ? g.unit : null),
     reserved: reserved.get(g.id) ?? 0,
     available: Math.max(0, g.desired_quantity - (reserved.get(g.id) ?? 0)),
   }));
@@ -76,7 +84,7 @@ export const getInvite = createServerFn({ method: "GET" })
 
     const { data: reservation } = await supabaseAdmin
       .from("reservations")
-      .select("id, confirmed_at, reservation_items(quantity, gifts(name))")
+      .select("id, confirmed_at, reservation_items(quantity, gifts(name, unit))")
       .eq("guest_id", guest.id)
       .eq("status", "confirmed")
       .maybeSingle();
@@ -92,6 +100,7 @@ export const getInvite = createServerFn({ method: "GET" })
           items: (reservation.reservation_items ?? []).map((i) => ({
             name: i.gifts?.name ?? "Presente",
             quantity: i.quantity,
+            unit: i.gifts && "unit" in i.gifts ? (i.gifts as { unit?: string }).unit : undefined,
           })),
         },
       };
@@ -105,7 +114,7 @@ export const getInvite = createServerFn({ method: "GET" })
       reservation: null,
       gifts: gifts
         .filter((g) => g.available > 0)
-        .map(({ id, name, desired, available }) => ({ id, name, desired, available })),
+        .map(({ id, name, desired, unit, available }) => ({ id, name, desired, unit, available })),
     };
   });
 
@@ -122,7 +131,7 @@ export const listAvailableGifts = createServerFn({ method: "GET" })
     const gifts = await loadGifts();
     return gifts
       .filter((g) => g.available > 0)
-      .map(({ id, name, desired, available }) => ({ id, name, desired, available }));
+      .map(({ id, name, desired, unit, available }) => ({ id, name, desired, unit, available }));
   });
 
 export const confirmReservation = createServerFn({ method: "POST" })
