@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Copy, LogOut, Pencil, Trash2, Share2 } from "lucide-react";
 
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +16,12 @@ import {
   adminListGifts,
   adminListGuests,
   adminListReservations,
-  adminExists,
+  adminLogin,
+  adminLogout,
   adminOverview,
   adminSaveGift,
   adminSaveGuest,
+  adminSession,
   adminSetReservationItem,
   adminSetReservationStatus,
 } from "@/lib/admin.functions";
@@ -34,49 +35,48 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "ADMIN-MASTER-DRAX-20260911" },
+      { name: "x-deploy-marker", content: "ADMIN-LOGIN-COOKIE-20260911" },
     ],
   }),
   component: Admin,
 });
 
 function Admin() {
-  const [sessao, setSessao] = useState<boolean | null>(null);
+  const sessaoFn = useServerFn(adminSession);
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "session"],
+    queryFn: () => sessaoFn(),
+  });
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSessao(Boolean(data.session)));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSessao(Boolean(s)));
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  if (sessao === null) return <div className="p-10 text-center text-sm">Carregando...</div>;
-  if (!sessao) return <Login />;
+  if (isLoading) return <div className="p-10 text-center text-sm">Carregando...</div>;
+  if (!data?.ok) return <Login />;
   return <Painel />;
 }
 
 function Login() {
+  const qc = useQueryClient();
   const [email, setEmail] = useState("drax@draxsistemas.com.br");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
-  const verificar = useServerFn(adminExists);
-  const { isFetched } = useQuery({
-    queryKey: ["admin", "exists"],
-    queryFn: () => verificar(),
-  });
+  const entrarFn = useServerFn(adminLogin);
 
   async function entrar(e: React.FormEvent) {
     e.preventDefault();
     setCarregando(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-      if (error) toast.error("E-mail ou senha incorretos.");
+      const r = await entrarFn({ data: { email, password: senha } });
+      if (!r.ok) {
+        toast.error(r.error ?? "E-mail ou senha incorretos.");
+        return;
+      }
+      await qc.invalidateQueries({ queryKey: ["admin", "session"] });
     } finally {
       setCarregando(false);
     }
   }
 
   return (
-    <main className="folha-bg flex min-h-screen items-center justify-center px-6" data-deploy="ADMIN-MASTER-DRAX-20260911">
+    <main className="folha-bg flex min-h-screen items-center justify-center px-6" data-deploy="ADMIN-LOGIN-COOKIE-20260911">
       <form onSubmit={entrar} className="w-full max-w-sm rounded-3xl border bg-card p-7 shadow-sm">
         <h1 className="text-center font-display text-3xl">Área do casal</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
@@ -109,7 +109,7 @@ function Login() {
             />
           </div>
         </div>
-        <Button type="submit" className="mt-6 w-full rounded-full" disabled={carregando || !isFetched}>
+        <Button type="submit" className="mt-6 w-full rounded-full" disabled={carregando}>
           {carregando ? "Aguarde..." : "Entrar"}
         </Button>
       </form>
@@ -120,6 +120,7 @@ function Login() {
 function Painel() {
   const qc = useQueryClient();
   const overview = useServerFn(adminOverview);
+  const sairFn = useServerFn(adminLogout);
   const { data } = useQuery({ queryKey: ["admin", "overview"], queryFn: () => overview() });
 
   const numeros = [
@@ -140,8 +141,8 @@ function Painel() {
           variant="ghost"
           size="sm"
           onClick={async () => {
-            await supabase.auth.signOut();
-            qc.clear();
+            await sairFn();
+            window.location.reload();
           }}
         >
           <LogOut className="mr-1.5 h-4 w-4" aria-hidden /> Sair
