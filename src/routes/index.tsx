@@ -7,9 +7,6 @@ import { toast } from "sonner";
 
 import heroImg from "@/assets/imagem-fundo.png";
 import fotoMeio from "@/assets/card01.png";
-import fotoCasalHero from "@/assets/casal-hero.jpg";
-import fotoCasal2 from "@/assets/casal-2.jpg";
-import fotoCasal3 from "@/assets/casal-3.jpg";
 import { Ramo } from "@/components/site/Decor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,26 +140,6 @@ function Recado({ nome }: { nome?: string }) {
         loading="lazy"
         className="mx-auto mt-8 h-56 w-full max-w-md rounded-3xl object-cover shadow-sm"
       />
-      <div className="mx-auto mt-3 grid max-w-md grid-cols-3 gap-2">
-        <img
-          src={fotoCasalHero}
-          alt=""
-          loading="lazy"
-          className="h-24 w-full rounded-2xl object-cover"
-        />
-        <img
-          src={fotoCasal2}
-          alt=""
-          loading="lazy"
-          className="h-24 w-full rounded-2xl object-cover"
-        />
-        <img
-          src={fotoCasal3}
-          alt=""
-          loading="lazy"
-          className="h-24 w-full rounded-2xl object-cover"
-        />
-      </div>
       <h3 className="mt-8 font-display text-2xl">{site.apresentacao.titulo}</h3>
       <p className="mx-auto mt-3 max-w-prose text-[15px] leading-relaxed text-muted-foreground">
         {site.apresentacao.texto}
