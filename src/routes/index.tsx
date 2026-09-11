@@ -7,6 +7,9 @@ import { toast } from "sonner";
 
 import heroImg from "@/assets/imagem-fundo.png";
 import fotoMeio from "@/assets/card01.png";
+import fotoCasalHero from "@/assets/casal-hero.jpg";
+import fotoCasal2 from "@/assets/casal-2.jpg";
+import fotoCasal3 from "@/assets/casal-3.jpg";
 import { Ramo } from "@/components/site/Decor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +55,7 @@ function Convite() {
 
   return (
     <main className="min-h-screen bg-background">
-      <Hero />
+      <Hero temLista={Boolean(token) && !query.data?.reservation && query.data?.found} />
       {!token ? (
         <Aviso titulo={site.semConvite.titulo} texto={site.semConvite.texto} />
       ) : query.isLoading ? (
@@ -71,6 +74,7 @@ function Convite() {
         <Selecao
           token={token}
           nome={query.data.guestName ?? ""}
+          whatsapp={query.data.guestWhatsapp ?? ""}
           gifts={query.data.gifts}
           onAtualizar={() => query.refetch()}
         />
@@ -82,7 +86,7 @@ function Convite() {
 
 /* ---------------------------------- Seções ---------------------------------- */
 
-function Hero() {
+function Hero({ temLista }: { temLista?: boolean }) {
   return (
     <header className="relative overflow-hidden bg-background">
       <img
@@ -96,12 +100,25 @@ function Hero() {
           {site.evento.titulo}
         </p>
         <h1 className="mt-2 font-display text-5xl leading-tight sm:text-6xl">{site.casal}</h1>
-        <p className="mt-3 text-sm opacity-90">{site.evento.dataCurta}</p>
+        <p className="mt-3 text-sm opacity-90">
+          {site.evento.dataCurta} · {site.evento.local}
+        </p>
         <p className="mx-auto mt-1.5 flex max-w-lg items-start justify-center gap-1.5 text-sm opacity-90">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>{site.evento.endereco}</span>
         </p>
-        <a href="#lista" className="mt-6 inline-flex">
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed opacity-95">{site.hero.frase}</p>
+        <a
+          href={temLista ? "#lista" : "#mensagem"}
+          className="mt-6 inline-flex"
+          onClick={(e) => {
+            const el = document.getElementById(temLista ? "lista" : "mensagem");
+            if (el) {
+              e.preventDefault();
+              el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }}
+        >
           <Button
             size="lg"
             className="h-11 rounded-full px-8 text-[15px] font-semibold shadow-[0_8px_32px_rgba(255,255,255,0.4)] ring-2 ring-secondary ring-offset-2 ring-offset-forest/70 hover:bg-primary hover:shadow-[0_12px_40px_rgba(255,255,255,0.55)]"
@@ -116,7 +133,7 @@ function Hero() {
 
 function Recado({ nome }: { nome?: string }) {
   return (
-    <section className="folha-bg px-6 py-12 text-center">
+    <section id="mensagem" className="folha-bg px-6 py-12 text-center">
       <Ramo className="mx-auto" />
       <h2 className="mt-5 font-display text-3xl">
         {nome ? site.saudacao(nome) : site.saudacaoGenerica}
@@ -126,10 +143,30 @@ function Recado({ nome }: { nome?: string }) {
       </p>
       <img
         src={fotoMeio}
-        alt="Detalhe do casal"
+        alt="Gabrielle e Erick"
         loading="lazy"
         className="mx-auto mt-8 h-56 w-full max-w-md rounded-3xl object-cover shadow-sm"
       />
+      <div className="mx-auto mt-3 grid max-w-md grid-cols-3 gap-2">
+        <img
+          src={fotoCasalHero}
+          alt=""
+          loading="lazy"
+          className="h-24 w-full rounded-2xl object-cover"
+        />
+        <img
+          src={fotoCasal2}
+          alt=""
+          loading="lazy"
+          className="h-24 w-full rounded-2xl object-cover"
+        />
+        <img
+          src={fotoCasal3}
+          alt=""
+          loading="lazy"
+          className="h-24 w-full rounded-2xl object-cover"
+        />
+      </div>
       <h3 className="mt-8 font-display text-2xl">{site.apresentacao.titulo}</h3>
       <p className="mx-auto mt-3 max-w-prose text-[15px] leading-relaxed text-muted-foreground">
         {site.apresentacao.texto}
@@ -175,7 +212,7 @@ function Agradecimento({
   repetido?: boolean;
 }) {
   return (
-    <section className="folha-bg px-6 py-16">
+    <section id="mensagem" className="folha-bg px-6 py-16">
       <div className="mx-auto max-w-md rounded-3xl border bg-card p-7 text-center shadow-sm">
         <Ramo className="mx-auto" />
         <h2 className="mt-4 font-display text-3xl">{site.sucesso.titulo}</h2>
@@ -220,11 +257,13 @@ function Rodape() {
 function Selecao({
   token,
   nome,
+  whatsapp = "",
   gifts,
   onAtualizar,
 }: {
   token: string;
   nome: string;
+  whatsapp?: string;
   gifts: PublicGift[];
   onAtualizar: () => void;
 }) {
@@ -232,7 +271,7 @@ function Selecao({
   const [aberta, setAberta] = useState(false);
   const [pronto, setPronto] = useState(false);
   const [nomeInput, setNomeInput] = useState(nome);
-  const [whats, setWhats] = useState("");
+  const [whats, setWhats] = useState(whatsapp ? maskWhatsapp(whatsapp) : "");
   const [enviando, setEnviando] = useState(false);
   const [confirmado, setConfirmado] = useState<{ name: string; quantity: number }[] | null>(null);
   const enviar = useServerFn(confirmReservation);
