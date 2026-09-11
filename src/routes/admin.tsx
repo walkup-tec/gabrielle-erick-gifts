@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "ADMIN-SEARCH-20260911" },
+      { name: "x-deploy-marker", content: "EVO-WHATSAPP-INVITE-20260911" },
     ],
   }),
   component: Admin,
@@ -429,8 +429,16 @@ function Convidados() {
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    await salvar({ data: { id, name: nome.trim(), whatsapp: whats || null } });
-    toast.success("Convidado salvo.");
+    const r = await salvar({ data: { id, name: nome.trim(), whatsapp: whats || null } });
+    if (id) {
+      toast.success("Convidado salvo.");
+    } else if (r.whatsappSent) {
+      toast.success("Convidado salvo. Convite enviado no WhatsApp.");
+    } else if (whats.trim()) {
+      toast.error(r.whatsappError ?? "Convidado salvo, mas o WhatsApp não foi enviado.");
+    } else {
+      toast.success("Convidado salvo. Sem WhatsApp, o convite não foi enviado.");
+    }
     setId(undefined);
     setNome("");
     setWhats("");
