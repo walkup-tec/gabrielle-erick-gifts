@@ -151,7 +151,7 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   return (
     <>
       <Recado />
-      <section className="px-6 pb-16">
+      <section className="px-6 pb-16 pt-12">
         <div className="mx-auto max-w-md rounded-3xl border bg-card p-7 text-center shadow-sm">
           <Heart className="mx-auto h-6 w-6 text-accent" aria-hidden />
           <h2 className="mt-3 font-display text-2xl">{titulo}</h2>
