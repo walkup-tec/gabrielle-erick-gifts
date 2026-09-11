@@ -38,36 +38,41 @@ export type InviteData = {
 };
 
 async function loadGifts() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { ensureInitialGifts, unitOf } = await import("@/lib/gifts-seed.server");
-  await ensureInitialGifts(supabaseAdmin as never);
-  const withUnit = await supabaseAdmin.from("gifts").select("id, name, desired_quantity, unit").order("name");
-  const giftsQuery = withUnit.error
-    ? await supabaseAdmin.from("gifts").select("id, name, desired_quantity").order("name")
-    : withUnit;
-  const [{ data: gifts, error: giftsError }, { data: items, error: itemsError }] =
-    await Promise.all([
-      Promise.resolve(giftsQuery),
-      supabaseAdmin
-        .from("reservation_items")
-        .select("gift_id, quantity, reservations!inner(status)")
-        .eq("reservations.status", "confirmed"),
-    ]);
-  if (giftsError) throw giftsError;
-  if (itemsError) throw itemsError;
-
-  const reserved = new Map<string, number>();
-  for (const item of items ?? []) {
-    reserved.set(item.gift_id, (reserved.get(item.gift_id) ?? 0) + item.quantity);
+  const { fromSeedGifts, ensureInitialGifts, unitOf } = await import("@/lib/gifts-seed.server");
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await ensureInitialGifts(supabaseAdmin as never);
+    const withUnit = await supabaseAdmin.from("gifts").select("id, name, desired_quantity, unit").order("name");
+    const giftsQuery = withUnit.error
+      ? await supabaseAdmin.from("gifts").select("id, name, desired_quantity").order("name")
+      : withUnit;
+    const [{ data: gifts, error: giftsError }, { data: items, error: itemsError }] =
+      await Promise.all([
+        Promise.resolve(giftsQuery),
+        supabaseAdmin
+          .from("reservation_items")
+          .select("gift_id, quantity, reservations!inner(status)")
+          .eq("reservations.status", "confirmed"),
+      ]);
+    if (giftsError) throw giftsError;
+    if (itemsError) throw itemsError;
+    if (!gifts?.length) return fromSeedGifts();
+    const reserved = new Map<string, number>();
+    for (const item of items ?? []) {
+      reserved.set(item.gift_id, (reserved.get(item.gift_id) ?? 0) + item.quantity);
+    }
+    return gifts.map((g) => ({
+      id: g.id,
+      name: g.name,
+      desired: g.desired_quantity,
+      unit: unitOf(g.name, "unit" in g ? g.unit : null),
+      reserved: reserved.get(g.id) ?? 0,
+      available: Math.max(0, g.desired_quantity - (reserved.get(g.id) ?? 0)),
+    }));
+  } catch (error) {
+    console.error("[convite] usando lista inicial de presentes", error);
+    return fromSeedGifts();
   }
-  return (gifts ?? []).map((g) => ({
-    id: g.id,
-    name: g.name,
-    desired: g.desired_quantity,
-    unit: unitOf(g.name, "unit" in g ? g.unit : null),
-    reserved: reserved.get(g.id) ?? 0,
-    available: Math.max(0, g.desired_quantity - (reserved.get(g.id) ?? 0)),
-  }));
 }
 
 export const getInvite = createServerFn({ method: "GET" })
