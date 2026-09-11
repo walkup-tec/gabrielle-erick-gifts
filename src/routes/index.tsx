@@ -34,6 +34,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
+      { name: "x-deploy-marker", content: "HERO-COVER-62VH-1980x1024" },
     ],
   }),
   component: Convite,
@@ -85,7 +86,7 @@ function Convite() {
 
 function Hero({ temLista }: { temLista?: boolean }) {
   return (
-    <header className="relative overflow-hidden">
+    <header className="relative overflow-hidden" data-deploy="HERO-COVER-62VH-1980x1024">
       <img src={heroImg} alt="" className="h-[62vh] min-h-[380px] w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-b from-forest/25 via-forest/35 to-forest/85" />
       <div className="absolute inset-x-0 bottom-0 px-6 pb-9 text-center text-primary-foreground">
