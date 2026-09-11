@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Loader2, LogOut, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Copy, Loader2, LogOut, MessageCircle, Pencil, Search, Share2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
   adminOverview,
   adminSaveGift,
   adminSaveGuest,
+  adminSendGuestInvite,
   adminSession,
   adminSetReservationItem,
   adminSetReservationStatus,
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
-      { name: "x-deploy-marker", content: "GUEST-SAVE-FALLBACK-20260911" },
+      { name: "x-deploy-marker", content: "EVO-INSTANCE-RESOLVE-20260911" },
     ],
   }),
   component: Admin,
@@ -407,6 +408,7 @@ function Presentes() {
 function Convidados() {
   const listar = useServerFn(adminListGuests);
   const salvar = useServerFn(adminSaveGuest);
+  const reenviar = useServerFn(adminSendGuestInvite);
   const excluir = useServerFn(adminDeleteGuest);
   const recarregar = useRecarregar();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "guests"], queryFn: () => listar() });
@@ -416,6 +418,7 @@ function Convidados() {
   const [whats, setWhats] = useState("");
   const [busca, setBusca] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [enviandoId, setEnviandoId] = useState<string | null>(null);
   const filtrados = useMemo(
     () =>
       (data ?? []).filter((c) =>
@@ -534,6 +537,35 @@ function Convidados() {
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1">
+                  {c.whatsapp ? (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Enviar convite no WhatsApp"
+                      disabled={enviandoId === c.id}
+                      onClick={async () => {
+                        setEnviandoId(c.id);
+                        try {
+                          const r = await reenviar({ data: { id: c.id } });
+                          if (!r.ok) {
+                            toast.error(r.error ?? "Não foi possível enviar o WhatsApp.");
+                            return;
+                          }
+                          toast.success("Convite enviado no WhatsApp.");
+                        } catch {
+                          toast.error("Não foi possível enviar o WhatsApp.");
+                        } finally {
+                          setEnviandoId(null);
+                        }
+                      }}
+                    >
+                      {enviandoId === c.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <MessageCircle className="h-4 w-4" aria-hidden />
+                      )}
+                    </Button>
+                  ) : null}
                   <Button
                     size="icon"
                     variant="ghost"
