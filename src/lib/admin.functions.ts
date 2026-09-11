@@ -50,32 +50,36 @@ async function computeGifts(db: Awaited<ReturnType<typeof ensureAdmin>>): Promis
     ]);
     if (e1) throw e1;
     if (e2) throw e2;
-    if (!gifts?.length) return fromSeedGifts();
+    const { withLocalReserved } = await import("@/lib/local-store.server");
+    if (!gifts?.length) return withLocalReserved(fromSeedGifts());
     const reserved = new Map<string, number>();
     for (const i of items ?? []) reserved.set(i.gift_id, (reserved.get(i.gift_id) ?? 0) + i.quantity);
 
-    return gifts.map((g) => {
-      const r = reserved.get(g.id) ?? 0;
-      const available = Math.max(0, g.desired_quantity - r);
-      return {
-        id: g.id,
-        name: g.name,
-        desired: g.desired_quantity,
-        unit: unitOf(g.name, "unit" in g ? g.unit : null),
-        reserved: r,
-        available,
-        status:
-          available === 0
-            ? ("Quantidade concluída" as const)
-            : r > 0
-              ? ("Parcialmente presenteado" as const)
-              : ("Disponível" as const),
-        created_at: g.created_at,
-      };
-    });
+    return withLocalReserved(
+      gifts.map((g) => {
+        const r = reserved.get(g.id) ?? 0;
+        const available = Math.max(0, g.desired_quantity - r);
+        return {
+          id: g.id,
+          name: g.name,
+          desired: g.desired_quantity,
+          unit: unitOf(g.name, "unit" in g ? g.unit : null),
+          reserved: r,
+          available,
+          status:
+            available === 0
+              ? ("Quantidade concluída" as const)
+              : r > 0
+                ? ("Parcialmente presenteado" as const)
+                : ("Disponível" as const),
+          created_at: g.created_at,
+        };
+      }),
+    );
   } catch (error) {
     console.error("[admin] usando lista inicial de presentes", error);
-    return fromSeedGifts();
+    const { withLocalReserved } = await import("@/lib/local-store.server");
+    return withLocalReserved(fromSeedGifts());
   }
 }
 
@@ -91,27 +95,39 @@ export const adminOverview = createServerFn({ method: "GET" })
         .from("reservations")
         .select("guest_id, status")
         .eq("status", "confirmed");
-      const escolheram = new Set((reservations ?? []).map((r) => r.guest_id));
+      const local = await import("@/lib/local-store.server");
+      const localGuests = await local.listLocalGuests();
+      const localReservations = await local.listLocalReservations();
+      const guestIds = new Set([...(guests ?? []).map((g) => g.id), ...localGuests.map((g) => g.id)]);
+      const escolheram = new Set([
+        ...(reservations ?? []).map((r) => r.guest_id),
+        ...localReservations.filter((r) => r.status === "confirmed").map((r) => r.guest_id),
+      ]);
       return {
         totalGifts: gifts.length,
         giftsAvailable: gifts.filter((g) => g.available > 0).length,
         giftsDone: gifts.filter((g) => g.available === 0).length,
-        totalGuests: guests?.length ?? 0,
+        totalGuests: guestIds.size,
         guestsChosen: escolheram.size,
-        guestsPending: (guests?.length ?? 0) - escolheram.size,
-        totalReservations: reservations?.length ?? 0,
+        guestsPending: guestIds.size - escolheram.size,
+        totalReservations:
+          (reservations?.length ?? 0) + localReservations.filter((r) => r.status === "confirmed").length,
       };
     } catch (error) {
       console.error("[admin] overview fallback", error);
       const gifts = fromSeedGifts();
+      const local = await import("@/lib/local-store.server");
+      const localGuests = await local.listLocalGuests();
+      const localReservations = (await local.listLocalReservations()).filter((r) => r.status === "confirmed");
+      const escolheram = new Set(localReservations.map((r) => r.guest_id));
       return {
         totalGifts: gifts.length,
         giftsAvailable: gifts.filter((g) => g.available > 0).length,
         giftsDone: gifts.filter((g) => g.available === 0).length,
-        totalGuests: 0,
-        guestsChosen: 0,
-        guestsPending: 0,
-        totalReservations: 0,
+        totalGuests: localGuests.length,
+        guestsChosen: escolheram.size,
+        guestsPending: localGuests.length - escolheram.size,
+        totalReservations: localReservations.length,
       };
     }
   });
@@ -171,18 +187,37 @@ export const adminDeleteGift = createServerFn({ method: "POST" })
 export const adminListGuests = createServerFn({ method: "GET" })
   .middleware([requireMaster])
   .handler(async ({ context }) => {
-    const db = await ensureAdmin();
-    const { data: guests, error } = await db
-      .from("guests")
-      .select("id, name, whatsapp, token, created_at")
-      .order("name");
-    if (error) throw error;
-    const { data: reservations } = await db
-      .from("reservations")
-      .select("guest_id")
-      .eq("status", "confirmed");
-    const chosen = new Set((reservations ?? []).map((r) => r.guest_id));
-    return (guests ?? []).map((g) => ({ ...g, chosen: chosen.has(g.id) }));
+    const local = await import("@/lib/local-store.server");
+    const localGuests = await local.listLocalGuests();
+    const localChosen = new Set(
+      (await local.listLocalReservations())
+        .filter((r) => r.status === "confirmed")
+        .map((r) => r.guest_id),
+    );
+
+    let guests = localGuests;
+    const chosen = new Set(localChosen);
+    try {
+      const db = await ensureAdmin();
+      const { data, error } = await db
+        .from("guests")
+        .select("id, name, whatsapp, token, created_at")
+        .order("name");
+      if (!error && data?.length) {
+        const byId = new Map(localGuests.map((g) => [g.id, g]));
+        for (const guest of data) byId.set(guest.id, guest);
+        guests = [...byId.values()];
+      }
+      const { data: reservations } = await db.from("reservations").select("guest_id").eq("status", "confirmed");
+      for (const row of reservations ?? []) chosen.add(row.guest_id);
+    } catch (error) {
+      console.error("[admin] listando convidados no arquivo local", error);
+    }
+
+    return guests
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+      .map((g) => ({ ...g, chosen: chosen.has(g.id) }));
   });
 
 export const adminSaveGuest = createServerFn({ method: "POST" })
@@ -197,38 +232,77 @@ export const adminSaveGuest = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin();
+    try {
+    const local = await import("@/lib/local-store.server");
     const payload = { name: data.name, whatsapp: data.whatsapp || null };
+
     if (data.id) {
-      const { error } = await db.from("guests").update(payload).eq("id", data.id);
-      if (error) throw error;
+      try {
+        const db = await ensureAdmin();
+        const { error } = await db.from("guests").update(payload).eq("id", data.id);
+        if (error) console.error("[admin] update guest supabase", error);
+      } catch (error) {
+        console.error("[admin] update guest supabase", error);
+      }
+      const current = await local.findGuestById(data.id);
+      if (current) {
+        await local.upsertLocalGuest({ ...current, ...payload });
+      }
       return { ok: true as const, whatsappSent: false as const };
     }
 
-    const token = newToken();
-    const { error } = await db.from("guests").insert({ ...payload, token });
-    if (error) throw error;
+    const guest = {
+      id: crypto.randomUUID(),
+      name: payload.name,
+      whatsapp: payload.whatsapp,
+      token: newToken(),
+      created_at: new Date().toISOString(),
+    };
 
-    if (!payload.whatsapp) {
+    try {
+      const db = await ensureAdmin();
+      const { error } = await db.from("guests").insert(guest);
+      if (error) console.error("[admin] insert guest supabase", error);
+    } catch (error) {
+      console.error("[admin] insert guest supabase", error);
+    }
+
+    await local.upsertLocalGuest(guest);
+
+    if (!guest.whatsapp) {
       return { ok: true as const, whatsappSent: false as const };
     }
 
-    const { enviarConviteWhatsapp } = await import("@/lib/evolution.server");
-    const enviado = await enviarConviteWhatsapp(payload.name, payload.whatsapp, token);
+    const { tentarEnviarConviteWhatsapp } = await import("@/lib/evolution.server");
+    const enviado = await tentarEnviarConviteWhatsapp(guest.name, guest.whatsapp, guest.token);
     return {
       ok: true as const,
       whatsappSent: enviado.ok,
       whatsappError: enviado.ok ? undefined : enviado.error,
     };
+    } catch (error) {
+      console.error("[admin] salvar convidado", error);
+      return {
+        ok: false as const,
+        whatsappSent: false as const,
+        error: "Não foi possível salvar o convidado.",
+      };
+    }
   });
 
 export const adminDeleteGuest = createServerFn({ method: "POST" })
   .middleware([requireMaster])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin();
-    const { error } = await db.from("guests").delete().eq("id", data.id);
-    if (error) throw error;
+    const local = await import("@/lib/local-store.server");
+    try {
+      const db = await ensureAdmin();
+      const { error } = await db.from("guests").delete().eq("id", data.id);
+      if (error) console.error("[admin] delete guest supabase", error);
+    } catch (error) {
+      console.error("[admin] delete guest supabase", error);
+    }
+    await local.deleteLocalGuest(data.id);
     return { ok: true };
   });
 
@@ -237,28 +311,54 @@ export const adminDeleteGuest = createServerFn({ method: "POST" })
 export const adminListReservations = createServerFn({ method: "GET" })
   .middleware([requireMaster])
   .handler(async ({ context }) => {
-    const db = await ensureAdmin();
-    const { data, error } = await db
-      .from("reservations")
-      .select(
-        "id, guest_name, whatsapp, status, confirmed_at, guests(id, name, token), reservation_items(id, quantity, gift_id, gifts(name))",
-      )
-      .order("confirmed_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []).map((r) => ({
+    const local = await import("@/lib/local-store.server");
+    const localGuests = await local.listLocalGuests();
+    const tokenByGuest = new Map(localGuests.map((g) => [g.id, g.token]));
+    const localRows = (await local.listLocalReservations()).map((r) => ({
       id: r.id,
       guestName: r.guest_name,
       whatsapp: r.whatsapp,
       status: r.status,
       confirmedAt: r.confirmed_at,
-      guestToken: r.guests?.token ?? null,
-      items: (r.reservation_items ?? []).map((i) => ({
+      guestToken: tokenByGuest.get(r.guest_id) ?? null,
+      items: r.items.map((i) => ({
         id: i.id,
         giftId: i.gift_id,
-        name: i.gifts?.name ?? "Presente",
+        name: i.name,
         quantity: i.quantity,
       })),
     }));
+
+    try {
+      const db = await ensureAdmin();
+      const { data, error } = await db
+        .from("reservations")
+        .select(
+          "id, guest_name, whatsapp, status, confirmed_at, guests(id, name, token), reservation_items(id, quantity, gift_id, gifts(name))",
+        )
+        .order("confirmed_at", { ascending: false });
+      if (error) throw error;
+      const fromDb = (data ?? []).map((r) => ({
+        id: r.id,
+        guestName: r.guest_name,
+        whatsapp: r.whatsapp,
+        status: r.status,
+        confirmedAt: r.confirmed_at,
+        guestToken: r.guests?.token ?? null,
+        items: (r.reservation_items ?? []).map((i) => ({
+          id: i.id,
+          giftId: i.gift_id,
+          name: i.gifts?.name ?? "Presente",
+          quantity: i.quantity,
+        })),
+      }));
+      const byId = new Map(localRows.map((r) => [r.id, r]));
+      for (const row of fromDb) byId.set(row.id, row);
+      return [...byId.values()].sort((a, b) => (a.confirmedAt < b.confirmedAt ? 1 : -1));
+    } catch (error) {
+      console.error("[admin] listando escolhas no arquivo local", error);
+      return localRows.sort((a, b) => (a.confirmedAt < b.confirmedAt ? 1 : -1));
+    }
   });
 
 export const adminSetReservationItem = createServerFn({ method: "POST" })
@@ -279,12 +379,33 @@ export const adminSetReservationItem = createServerFn({ method: "POST" })
       _gift_id: data.giftId,
       _quantity: data.quantity,
     });
-    if (error) throw error;
-    const r = result as { ok: boolean; error?: string };
-    if (!r.ok && r.error === "unavailable") {
-      return { ok: false, error: "Não há unidades suficientes deste presente." };
+    if (!error) {
+      const r = result as { ok: boolean; error?: string };
+      if (!r.ok && r.error === "unavailable") {
+        return { ok: false, error: "Não há unidades suficientes deste presente." };
+      }
+      return r;
     }
-    return r;
+
+    const local = await import("@/lib/local-store.server");
+    const gifts = await computeGifts(db);
+    const gift = gifts.find((g) => g.id === data.giftId);
+    if (!gift && data.quantity > 0) {
+      return { ok: false, error: "Presente não encontrado." };
+    }
+    const updated = await local.setLocalReservationItem(
+      data.reservationId,
+      {
+        id: crypto.randomUUID(),
+        gift_id: data.giftId,
+        name: gift?.name ?? "Presente",
+        quantity: data.quantity,
+        unit: gift?.unit,
+      },
+      data.quantity,
+    );
+    if (!updated) return { ok: false, error: "Escolha não encontrada." };
+    return { ok: true };
   });
 
 export const adminSetReservationStatus = createServerFn({ method: "POST" })
@@ -323,7 +444,10 @@ export const adminSetReservationStatus = createServerFn({ method: "POST" })
       .from("reservations")
       .update({ status: data.status })
       .eq("id", data.reservationId);
-    if (error) throw error;
+    if (!error) return { ok: true as const };
+    const local = await import("@/lib/local-store.server");
+    const updated = await local.setLocalReservationStatus(data.reservationId, data.status);
+    if (!updated) throw error;
     return { ok: true as const };
   });
 
