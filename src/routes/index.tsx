@@ -24,18 +24,18 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "Chá dos Noivos · Gabrielle & Erick" },
+      { title: `Chá dos Noivos · ${site.casal}` },
       {
         name: "description",
         content:
-          "Convite e lista de presentes do Chá dos Noivos de Gabrielle e Erick, em 18 de outubro de 2026.",
+          `Convite e lista de presentes do Chá dos Noivos de ${site.casalPorExtenso}, em 18 de outubro de 2026.`,
       },
-      { property: "og:title", content: "Chá dos Noivos · Gabrielle & Erick" },
+      { property: "og:title", content: `Chá dos Noivos · ${site.casal}` },
       {
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "HERO-MOBILE-PREVIOUS-20260911" },
+      { name: "x-deploy-marker", content: "COUPLE-ERICK-ANA-20260914" },
     ],
   }),
   component: Convite,
@@ -145,7 +145,7 @@ function Recado({ nome }: { nome?: string }) {
       </p>
       <img
         src={fotoMeio}
-        alt="Gabrielle e Erick"
+        alt={site.casalPorExtenso}
         loading="lazy"
         className="mx-auto mt-8 h-56 w-full max-w-md rounded-3xl object-cover shadow-sm"
       />
