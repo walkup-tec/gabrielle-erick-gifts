@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "COUPLE-ERICK-ANA-20260914" },
+      { name: "x-deploy-marker", content: "NO-WEDDING-INFO-20260914" },
     ],
   }),
   component: Convite,
@@ -152,9 +152,6 @@ function Recado({ nome }: { nome?: string }) {
       <h3 className="mt-8 font-display text-2xl">{site.apresentacao.titulo}</h3>
       <p className="mx-auto mt-3 max-w-prose text-[15px] leading-relaxed text-muted-foreground">
         {site.apresentacao.texto}
-      </p>
-      <p className="mt-8 text-xs uppercase tracking-[0.25em] text-muted-foreground">
-        {site.casamento.titulo} · {site.casamento.dataNumerica} · {site.casamento.local}
       </p>
     </section>
   );
