@@ -1,21 +1,25 @@
-import { site } from "@/content/site";
-
 export function mensagemConviteWhatsapp(nome: string, link: string) {
   return [
-    `Oi, ${nome}!`,
+    `Olá, ${nome}! 💚`,
     "",
-    "Somos o Erick e a Ana. Que alegria ter você com a gente no nosso Chá dos Noivos.",
+    "Estamos muito felizes em poder compartilhar com você um momento tão especial para nós: o nosso Chá dos Noivos !💍",
     "",
-    "📅 18 de outubro de 2026, às 6:00",
-    `📍 ${site.evento.local}`,
-    "Av. Rodolfo Müler, 1772 — Feitoria, São Leopoldo - RS",
+    "Estamos vivendo uma fase cheia de planos, sonhos e preparativos para o nosso casamento, e queremos muito celebrar esse novo passo ao lado de pessoas que amamos e que fazem parte da nossa história.",
     "",
-    "Neste link exclusivo você vê o convite e escolhe o presente da nossa casa:",
+    "💚 Data | 18 de outubro de 2026",
+    "💚 Horário | 16h",
+    "💚 Local | Capela NRS Aparecida",
+    "Av. Rodolfo Müller, 1772 – Feitoria, São Leopoldo/RS",
     "",
-    link,
+    "Preparamos uma lista de presentes com alguns itens que farão parte do nosso novo lar e dessa nova etapa da nossa vida! Para que você possa nos presentear, deixamos a lista disponível aqui:",
+    `📎 ${link}`,
+    "",
+    "E claro… teremos uma surpresinha preparada para deixar a tarde ainda mais divertida!👀🤭💚",
+    "",
+    "Estamos muito felizes e esperamos você para comemorar esse novo capítulo com a gente!✨",
     "",
     "Com carinho,",
-    "Erick & Ana",
+    "Érick & Ana 💍",
   ].join("\n");
 }
 
