@@ -12,15 +12,9 @@ export const site = {
     local: "Capela Nossa Senhora Aparecida",
     endereco: "Av. Rodolfo Müler, 1772 - Feitoria, São Leopoldo - RS",
   },
-  casamento: {
-    titulo: "Casamento",
-    dataCurta: "25 de abril de 2027",
-    dataNumerica: "25/04/2027",
-    local: "Paróquia Nossa Senhora das Graças",
-  },
   hero: {
     convite:
-      "Estamos preparando um dia cheio de carinho e queremos você por perto. Antes do grande sim, vamos celebrar juntos o começo da nossa casa.",
+      "Estamos preparando um dia cheio de carinho e queremos você por perto. Vamos celebrar juntos o começo da nossa casa.",
     frase: "Vem celebrar com a gente o começo da nossa casa.",
     cta: "Ver lista de presentes",
   },
