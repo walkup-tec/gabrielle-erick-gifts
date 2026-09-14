@@ -2,8 +2,8 @@
  * Todos os textos públicos do site ficam aqui para facilitar a edição.
  */
 export const site = {
-  casal: "Gabrielle & Erick",
-  casalPorExtenso: "Gabrielle e Erick",
+  casal: "Erick & Ana",
+  casalPorExtenso: "Erick e Ana",
   evento: {
     titulo: "Chá dos Noivos",
     dataCurta: "18 de outubro de 2026 · 6:00",
@@ -73,14 +73,14 @@ export const site = {
       "Parece que alguém acabou de escolher uma das opções que você selecionou. Atualizamos sua lista para você escolher novamente.",
     conviteInvalido: "Convite não encontrado",
     conviteInvalidoTexto:
-      "Não conseguimos encontrar este convite. Confira se o link recebido está completo ou fale com Gabrielle e Erick.",
+      "Não conseguimos encontrar este convite. Confira se o link recebido está completo ou fale com Erick e Ana.",
     nomeObrigatorio: "Por favor, escreva o seu nome.",
     whatsappObrigatorio: "Informe um WhatsApp no formato (11) 99999-9999.",
   },
   semConvite: {
     titulo: "A lista é por convite",
     texto:
-      "Cada convidado recebe um link exclusivo com a nossa lista de presentes. Se você ainda não recebeu o seu, fale com Gabrielle e Erick.",
+      "Cada convidado recebe um link exclusivo com a nossa lista de presentes. Se você ainda não recebeu o seu, fale com Erick e Ana.",
   },
   footer: {
     autor: "Feito com carinho por Marcelo Mozart",
