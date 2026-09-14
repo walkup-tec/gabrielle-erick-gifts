@@ -4,7 +4,7 @@ export function mensagemConviteWhatsapp(nome: string, link: string) {
   return [
     `Oi, ${nome}!`,
     "",
-    "Somos a Gabrielle e o Erick. Que alegria ter você com a gente no nosso Chá dos Noivos.",
+    "Somos o Erick e a Ana. Que alegria ter você com a gente no nosso Chá dos Noivos.",
     "",
     "📅 18 de outubro de 2026, às 6:00",
     `📍 ${site.evento.local}`,
@@ -15,7 +15,7 @@ export function mensagemConviteWhatsapp(nome: string, link: string) {
     link,
     "",
     "Com carinho,",
-    "Gabrielle & Erick",
+    "Erick & Ana",
   ].join("\n");
 }
 
