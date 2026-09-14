@@ -32,10 +32,10 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Área do casal · Chá dos Noivos" },
-      { name: "description", content: "Painel reservado de Gabrielle e Erick." },
+      { name: "description", content: "Painel reservado de Erick e Ana." },
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
-      { property: "og:description", content: "Painel reservado de Gabrielle e Erick." },
+      { property: "og:description", content: "Painel reservado de Erick e Ana." },
       { name: "x-deploy-marker", content: "EVO-INSTANCE-RESOLVE-20260911" },
     ],
   }),
