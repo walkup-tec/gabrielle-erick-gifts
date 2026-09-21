@@ -28,14 +28,14 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          `Convite e lista de presentes do Chá dos Noivos de ${site.casalPorExtenso}, em 18 de outubro de 2026.`,
+          `Convite e lista de presentes do Chá dos Noivos de ${site.casalPorExtenso}, em 24 de outubro de 2026.`,
       },
       { property: "og:title", content: `Chá dos Noivos · ${site.casal}` },
       {
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "NO-WEDDING-INFO-20260914" },
+      { name: "x-deploy-marker", content: "CHA-24OUT-20260921" },
     ],
   }),
   component: Convite,
