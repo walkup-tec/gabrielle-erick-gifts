@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "WHATSAPP-16H-20260921" },
+      { name: "x-deploy-marker", content: "EVO-INSTANCE-GABI-20260921" },
     ],
   }),
   component: Convite,
