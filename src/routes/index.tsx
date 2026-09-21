@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "HERO-DATE-ONLY-20260921" },
+      { name: "x-deploy-marker", content: "HERO-DATE-FONT-20260921" },
     ],
   }),
   component: Convite,
@@ -102,9 +102,9 @@ function Hero({ temLista }: { temLista?: boolean }) {
           {site.evento.titulo}
         </p>
         <h1 className="mt-2 font-display text-5xl leading-tight sm:text-6xl">{site.casal}</h1>
-        <p className="mt-3 text-sm opacity-90">{site.evento.dataCurta}</p>
-        <p className="mx-auto mt-1.5 flex max-w-lg items-start justify-center gap-1.5 text-sm opacity-90">
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <p className="mt-3 text-[1.1375rem] opacity-90">{site.evento.dataCurta}</p>
+        <p className="mx-auto mt-1.5 flex max-w-lg items-start justify-center gap-1.5 text-[1.1375rem] opacity-90">
+          <MapPin className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
           <span>{site.evento.endereco}</span>
         </p>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed opacity-95">{site.hero.frase}</p>
