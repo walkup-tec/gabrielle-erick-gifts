@@ -6,9 +6,9 @@ export const site = {
   casalPorExtenso: "Erick e Ana",
   evento: {
     titulo: "Chá dos Noivos",
-    dataCurta: "24 de outubro de 2026 · 16:00",
+    dataCurta: "24 de outubro de 2026 · 16h",
     dataNumerica: "24/10/2026",
-    horario: "16:00",
+    horario: "16h",
     local: "Primavera - NH",
     endereco: "Rua Emancipação 115, bairro Primavera - NH",
   },
