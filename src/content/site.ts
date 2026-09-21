@@ -6,11 +6,11 @@ export const site = {
   casalPorExtenso: "Erick e Ana",
   evento: {
     titulo: "Chá dos Noivos",
-    dataCurta: "18 de outubro de 2026 · 6:00",
-    dataNumerica: "18/10/2026",
-    horario: "6:00",
-    local: "Capela Nossa Senhora Aparecida",
-    endereco: "Av. Rodolfo Müler, 1772 - Feitoria, São Leopoldo - RS",
+    dataCurta: "24 de outubro de 2026 · 16:00",
+    dataNumerica: "24/10/2026",
+    horario: "16:00",
+    local: "Primavera - NH",
+    endereco: "Rua Emancipação 115, bairro Primavera - NH",
   },
   hero: {
     convite:
