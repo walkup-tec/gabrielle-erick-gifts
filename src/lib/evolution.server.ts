@@ -8,7 +8,7 @@ type EvoInstance = {
 
 function evoConfig() {
   const key = process.env["EVO_API_KEY"] || "";
-  const instance = process.env["EVO_INSTANCE"] || "5181077770";
+  const instance = process.env["EVO_INSTANCE"] || "gabi";
   const urls = [
     process.env["EVO_API_URL"],
     process.env["EVO_API_FALLBACK_URL"],
