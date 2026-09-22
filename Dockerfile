@@ -22,9 +22,14 @@ ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=80
 COPY --from=build /app/.output /app/.output
 COPY --from=build /app/.env /app/.env
+COPY --from=build /app/data /app/data
 COPY listen.mjs /app/listen.mjs
 COPY start.sh /app/start.sh
 COPY package.json /app/package.json
-RUN chmod +x /app/start.sh
+RUN chmod +x /app/start.sh && mkdir -p /data && chmod 777 /data
+ENV LOCAL_STORE_PATH=/data/local-store.json
+ENV LOCAL_STORE_SEED=/app/data/local-store.seed.json
+ENV SKIP_SUPABASE=true
+VOLUME ["/data"]
 EXPOSE 80 3000
 CMD ["bun", "/app/listen.mjs"]

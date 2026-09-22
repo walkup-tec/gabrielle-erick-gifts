@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "HERO-DATE-FONT-20260921" },
+      { name: "x-deploy-marker", content: "GUESTS-RECOVER-FAST-20260922" },
     ],
   }),
   component: Convite,
@@ -49,7 +49,8 @@ function Convite() {
     queryKey: ["convite", token],
     queryFn: () => carregarConvite({ data: { token: token! } }),
     enabled: Boolean(token),
-    retry: 1,
+    retry: 0,
+    staleTime: 15_000,
   });
 
   return (

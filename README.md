@@ -1,4 +1,30 @@
+# Chá dos Noivos · Erick & Ana
+
+Site em produção: https://chaanaeerick.draxsistemas.com.br/
+
+Lista de presentes e convites individuais. Área do casal em `/admin`.
+
+## Persistência — não perder convidados
+
+Os convidados, presentes e escolhas ficam em `/data/local-store.json`.
+
+No EasyPanel, no serviço, crie um volume apontando para `/data` **antes** de implantar. Sem esse volume, cada Implantar recria o container.
+
+A lista recuperada do WhatsApp (46 convidados) também vai no arquivo `data/local-store.seed.json` dentro da imagem. Na subida o sistema junta essa lista com o que já estiver no volume, sem apagar ninguém novo.
+
+## Rodar local
+
+```bash
+bun install
+bun run dev
+```
+
+Painel: http://localhost:3000/admin
+
+---
+
 # Gabrielle & Erick's Gifts
+
 
 Crie e gere o site completo no Lovable para o “Chá dos Noivos” de Gabrielle e Erick.
 

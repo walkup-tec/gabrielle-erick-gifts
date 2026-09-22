@@ -36,7 +36,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Erick e Ana." },
-      { name: "x-deploy-marker", content: "GIFT-SAVE-LOCAL-20260922" },
+      { name: "x-deploy-marker", content: "GUESTS-RECOVER-FAST-20260922" },
     ],
   }),
   component: Admin,
@@ -119,10 +119,19 @@ function Login() {
 }
 
 function Painel() {
-  const qc = useQueryClient();
   const overview = useServerFn(adminOverview);
+  const listarPresentes = useServerFn(adminListGifts);
+  const listarConvidados = useServerFn(adminListGuests);
+  const listarEscolhas = useServerFn(adminListReservations);
   const sairFn = useServerFn(adminLogout);
-  const { data } = useQuery({ queryKey: ["admin", "overview"], queryFn: () => overview() });
+  const { data } = useQuery({
+    queryKey: ["admin", "overview"],
+    queryFn: () => overview(),
+    staleTime: 20_000,
+  });
+  useQuery({ queryKey: ["admin", "gifts"], queryFn: () => listarPresentes(), staleTime: 20_000 });
+  useQuery({ queryKey: ["admin", "guests"], queryFn: () => listarConvidados(), staleTime: 20_000 });
+  useQuery({ queryKey: ["admin", "reservations"], queryFn: () => listarEscolhas(), staleTime: 20_000 });
 
   const numeros = [
     ["Presentes", data?.totalGifts],
@@ -241,7 +250,11 @@ function Presentes() {
   const salvar = useServerFn(adminSaveGift);
   const excluir = useServerFn(adminDeleteGift);
   const recarregar = useRecarregar();
-  const { data, isLoading } = useQuery({ queryKey: ["admin", "gifts"], queryFn: () => listar() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "gifts"],
+    queryFn: () => listar(),
+    staleTime: 20_000,
+  });
   const formRef = useRef<HTMLFormElement>(null);
 
   const [id, setId] = useState<string | undefined>();
@@ -428,7 +441,11 @@ function Convidados() {
   const reenviar = useServerFn(adminSendGuestInvite);
   const excluir = useServerFn(adminDeleteGuest);
   const recarregar = useRecarregar();
-  const { data, isLoading } = useQuery({ queryKey: ["admin", "guests"], queryFn: () => listar() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "guests"],
+    queryFn: () => listar(),
+    staleTime: 20_000,
+  });
 
   const [id, setId] = useState<string | undefined>();
   const [nome, setNome] = useState("");
@@ -652,10 +669,12 @@ function Escolhas() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "reservations"],
     queryFn: () => listar(),
+    staleTime: 20_000,
   });
   const { data: presentes } = useQuery({
     queryKey: ["admin", "gifts"],
     queryFn: () => listarPresentes(),
+    staleTime: 20_000,
   });
   const filtrados = useMemo(
     () =>

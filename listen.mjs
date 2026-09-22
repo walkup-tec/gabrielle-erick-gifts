@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { existsSync, readFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 
 function loadEnv(file) {
@@ -23,6 +23,18 @@ function loadEnv(file) {
 
 loadEnv("/app/.env");
 loadEnv(new URL("./.env", import.meta.url).pathname);
+
+try {
+  mkdirSync("/data", { recursive: true });
+  if (!existsSync("/data/local-store.json") && existsSync("/app/data/local-store.seed.json")) {
+    copyFileSync("/app/data/local-store.seed.json", "/data/local-store.json");
+  }
+} catch (error) {
+  console.error("[gabrielle] não foi possível preparar /data", error);
+}
+process.env.LOCAL_STORE_PATH = process.env.LOCAL_STORE_PATH || "/data/local-store.json";
+process.env.LOCAL_STORE_SEED = process.env.LOCAL_STORE_SEED || "/app/data/local-store.seed.json";
+process.env.SKIP_SUPABASE = process.env.SKIP_SUPABASE || "true";
 
 process.env.HOST = "0.0.0.0";
 process.env.NITRO_HOST = "0.0.0.0";

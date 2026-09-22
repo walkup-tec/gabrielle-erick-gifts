@@ -1,0 +1,340 @@
+{
+  "guests": [
+    {
+      "id": "364de280-ace0-5dee-8f6f-f4744423a246",
+      "name": "Alana e Gabriel",
+      "whatsapp": "555193655060",
+      "token": "tjsMprYMmTNxPCfFAFO6KA",
+      "created_at": "2026-09-22T19:08:48Z",
+      "aliases": [
+        "Umfvzx_etoOvUFc4WWqxzg"
+      ]
+    },
+    {
+      "id": "54465668-2e72-5a40-8195-124168d8ecc1",
+      "name": "Andressa",
+      "whatsapp": "555196126087",
+      "token": "YadHkDqhcBYr05HczQ79JA",
+      "created_at": "2026-09-22T19:12:52Z"
+    },
+    {
+      "id": "0ba0587a-8903-5db7-8fa7-b5b5f229b2d7",
+      "name": "Antony",
+      "whatsapp": "555197654861",
+      "token": "rF1Pz5SS9UcrEZ475EmJQA",
+      "created_at": "2026-09-22T16:31:15Z"
+    },
+    {
+      "id": "55190f03-56ac-5831-a02b-42b908968050",
+      "name": "Bruno",
+      "whatsapp": "555189449195",
+      "token": "DwmjtMcYsU-zT3mi7R7TWQ",
+      "created_at": "2026-09-22T18:23:19Z"
+    },
+    {
+      "id": "ab369322-d495-5620-8547-ef9285d8c7ed",
+      "name": "Cida e Ardelino",
+      "whatsapp": "555185935255",
+      "token": "nYtOpD7czWKfNGPjvmPKVQ",
+      "created_at": "2026-09-22T20:08:48Z"
+    },
+    {
+      "id": "b53d612d-ede0-5b4c-9bc4-caaaf07058b7",
+      "name": "Cleide",
+      "whatsapp": "555197451409",
+      "token": "Of88HRrza_Gjfr7WnuZncQ",
+      "created_at": "2026-09-11T23:36:18Z"
+    },
+    {
+      "id": "472a00a9-fce0-5a16-bff2-1d4cfc90b5c2",
+      "name": "Cristina",
+      "whatsapp": "555185481646",
+      "token": "FAALtFh0wTMlcIdnHALJiQ",
+      "created_at": "2026-09-22T19:20:00Z"
+    },
+    {
+      "id": "770ffa47-3003-5948-a4ea-778e09e1e40b",
+      "name": "Dindo Leandro",
+      "whatsapp": "555195959626",
+      "token": "2SryUGvANM_5lMWNxg8xUg",
+      "created_at": "2026-09-22T16:32:53Z"
+    },
+    {
+      "id": "c5ad64dc-59aa-5193-bd7a-bfb078b9c636",
+      "name": "Dindo Vagner, Tia Val e Ana",
+      "whatsapp": "555193253547",
+      "token": "HLYkmKOxYsdwKI04MIgu3Q",
+      "created_at": "2026-09-22T19:32:14Z"
+    },
+    {
+      "id": "746af9f8-f981-544f-ae3a-33cce1d02acd",
+      "name": "Diogo, Ray e Manu",
+      "whatsapp": "555189553470",
+      "token": "v81GKOLKhcNo-SxRLaA8MQ",
+      "created_at": "2026-09-22T18:23:11Z"
+    },
+    {
+      "id": "b52ccb78-6e92-5e68-8823-9e5960781cd6",
+      "name": "Eliane e Maicon",
+      "whatsapp": "555189475238",
+      "token": "Xuyo4R-XowqoHH6HoPsgzg",
+      "created_at": "2026-09-22T19:12:06Z"
+    },
+    {
+      "id": "c2b7a2f9-ba29-5f5f-b1d2-354a1ea62220",
+      "name": "Elisa e Tony",
+      "whatsapp": "555197546174",
+      "token": "TfCGp6C3-SznKSoAQJi3xw",
+      "created_at": "2026-09-22T19:34:51Z"
+    },
+    {
+      "id": "f3526780-40ed-5d92-93b1-784758d92737",
+      "name": "Evandro e Cris",
+      "whatsapp": "555182287912",
+      "token": "wUzPhUowrJSqR1lISmcJAA",
+      "created_at": "2026-09-22T18:34:51Z"
+    },
+    {
+      "id": "b8dee0e4-53e9-5787-9896-2f49d7cc6267",
+      "name": "Isadora, Tiago, Larissa e Teresa",
+      "whatsapp": "555184153353",
+      "token": "zmWKpTC9z9JV-vW5eHTSbg",
+      "created_at": "2026-09-22T20:08:26Z"
+    },
+    {
+      "id": "10c53a09-700e-5294-a296-385702ba27bb",
+      "name": "Janaina",
+      "whatsapp": "555199804696",
+      "token": "NEcwlAZlVCR5aO72XQYB6g",
+      "created_at": "2026-09-22T16:26:57Z"
+    },
+    {
+      "id": "f410fc08-9f32-56a4-8c57-3c7cbd3452f5",
+      "name": "Joice e Luis",
+      "whatsapp": "555185295403",
+      "token": "TaptYdG5Xz1uwAbAbBzuqA",
+      "created_at": "2026-09-22T19:17:36Z"
+    },
+    {
+      "id": "8692e69f-7435-5393-a680-d70154e3804d",
+      "name": "Kelen, Rogério e Adri",
+      "whatsapp": "555193136133",
+      "token": "EYec9Aza4yzXgwPqcFycmA",
+      "created_at": "2026-09-22T16:27:55Z"
+    },
+    {
+      "id": "7457cc58-6b27-5886-babf-2a973265e495",
+      "name": "Leonardo e Sophia",
+      "whatsapp": "555191441121",
+      "token": "-pcAumvnYdVpDQ2jB2Ibjg",
+      "created_at": "2026-09-22T16:25:50Z"
+    },
+    {
+      "id": "f16755e5-f3fd-50e3-a849-d912b3187de3",
+      "name": "Lucas",
+      "whatsapp": "555180886120",
+      "token": "4h3WvpaVr2xoLZFoGO0NPg",
+      "created_at": "2026-09-22T18:26:40Z"
+    },
+    {
+      "id": "23b9af75-70df-57ec-9277-384e398357d1",
+      "name": "Luiggi e Rafaela",
+      "whatsapp": "555185935256",
+      "token": "v5mxmBFCGv9vGusbFHxLxA",
+      "created_at": "2026-09-22T20:08:01Z"
+    },
+    {
+      "id": "0ff0b90f-0d23-5376-a102-fef6af15fa3a",
+      "name": "Luísa e Arthur",
+      "whatsapp": "555199133839",
+      "token": "Tol4IBM77s3QUIhTParruA",
+      "created_at": "2026-09-22T18:33:58Z"
+    },
+    {
+      "id": "417fd0df-1024-5be8-9f2a-6c1d9a37a130",
+      "name": "Lívia d Gabriel",
+      "whatsapp": "555192440333",
+      "token": "DfuqYqmcHSzEFXNDw8ZeOg",
+      "created_at": "2026-09-12T15:35:50Z"
+    },
+    {
+      "id": "ce30719b-287f-5bdf-b6d5-f886cddd2c49",
+      "name": "Marcelo",
+      "whatsapp": "555199666841",
+      "token": "KBxrekRzalSptgvjHIHIfA",
+      "created_at": "2026-09-22T19:43:05Z"
+    },
+    {
+      "id": "692ca671-0b83-56bb-ab26-1f2479fb8030",
+      "name": "Matheus",
+      "whatsapp": "555181637145",
+      "token": "gPtTbWNSMfsg4kRW6adfaw",
+      "created_at": "2026-09-22T18:27:24Z"
+    },
+    {
+      "id": "87931386-8852-542e-99e1-a9f3ffbe0bf8",
+      "name": "Mathias e Juliana",
+      "whatsapp": "555193837911",
+      "token": "GbZPlemKWO6IiKrPs_tBsA",
+      "created_at": "2026-09-22T18:34:41Z"
+    },
+    {
+      "id": "1cf743dd-b062-5459-a160-f5e31bc6b099",
+      "name": "Nicoly e Felipe",
+      "whatsapp": "555198717372",
+      "token": "lYwnPlb3Pwps0mgZD_MlHQ",
+      "created_at": "2026-09-22T16:26:43Z"
+    },
+    {
+      "id": "2c478f0a-3a13-5842-a3ed-6f491886eded",
+      "name": "Rafaela e Daniel",
+      "whatsapp": "555181874683",
+      "token": "XeZS_FClxvQ7pdUxPFYTSg",
+      "created_at": "2026-09-22T16:32:12Z"
+    },
+    {
+      "id": "fbdc4b17-c7bd-5cf5-9e13-b8a70f5ed76b",
+      "name": "Sônia e Joacir",
+      "whatsapp": "555195477450",
+      "token": "fGXmHWcqscAjPnzPON6twQ",
+      "created_at": "2026-09-22T19:18:58Z"
+    },
+    {
+      "id": "924801d2-9664-5698-887f-350057587f44",
+      "name": "Teste | Ana",
+      "whatsapp": "555184400267",
+      "token": "-nk6YJpu4grOzt8_duH_5g",
+      "created_at": "2026-09-22T20:22:20Z",
+      "aliases": [
+        "QS2-a3gkZ2uySGmH9JB6vQ",
+        "UgBP69sI7HFJSETZ4J81uQ"
+      ]
+    },
+    {
+      "id": "57cdedab-4935-56e7-94b7-e7c86dad75a5",
+      "name": "Teste | Érick",
+      "whatsapp": "555185289950",
+      "token": "ynhUZRV3MwBnd3zxeE00YQ",
+      "created_at": "2026-09-22T01:50:08Z",
+      "aliases": [
+        "RldlZ4OwchZA0Gnd-e6UZQ"
+      ]
+    },
+    {
+      "id": "13110260-77f6-50cf-8209-e6f075dc5dbf",
+      "name": "Tia Ciane, Tio Rafael, Gigica e Laura",
+      "whatsapp": "555184531955",
+      "token": "gqr-kcybu8g1Sm23NZLIEA",
+      "created_at": "2026-09-22T19:33:58Z"
+    },
+    {
+      "id": "6b59e287-44dc-502b-b231-d678d8741a31",
+      "name": "Tia Cris",
+      "whatsapp": "555192140221",
+      "token": "Pnv0E70idpUMwKtepj1XfQ",
+      "created_at": "2026-09-22T16:28:50Z"
+    },
+    {
+      "id": "23d9e398-18bc-5065-8b3a-230448a947c2",
+      "name": "Tia Elenice, Tio Juliano, Bryan e Yasmin",
+      "whatsapp": "555196601672",
+      "token": "7B5tT8w9VB2B9oUuuuBDHA",
+      "created_at": "2026-09-22T18:25:48Z"
+    },
+    {
+      "id": "59fba627-8b0a-5452-8b2a-4723975ddabe",
+      "name": "Tia Fernanda e Tio Mauricio",
+      "whatsapp": "555184861835",
+      "token": "WLJzlZEFgziW3q4FNrPvwQ",
+      "created_at": "2026-09-22T19:16:00Z"
+    },
+    {
+      "id": "f45ec7d8-a04e-515d-9905-876d960cc429",
+      "name": "Tia Vivi, Tio Juarez, Lelê e Lolô",
+      "whatsapp": "555193308660",
+      "token": "Ee96VEjl4hNQEN6W5WTUbw",
+      "created_at": "2026-09-22T16:25:26Z"
+    },
+    {
+      "id": "fa6df35c-a8ad-5f03-a880-fa89e0720498",
+      "name": "Tio Adilson e Tia Cassi",
+      "whatsapp": "555193086430",
+      "token": "sJ4Ks9gkoIkPlTJeDrIotw",
+      "created_at": "2026-09-22T19:31:17Z"
+    },
+    {
+      "id": "b3e8bd96-05cf-5bce-b401-9cdc611d8644",
+      "name": "Tio César",
+      "whatsapp": "555199296772",
+      "token": "JYfynIRjqwq8tI4wjaAJzg",
+      "created_at": "2026-09-22T19:18:02Z"
+    },
+    {
+      "id": "115dde49-2fad-5e7c-a50d-6bb9e2910d05",
+      "name": "Tio Leandro, Tia Joice e Dudu",
+      "whatsapp": "555191747443",
+      "token": "UMBqdnzfRGHCweGYZXJH8A",
+      "created_at": "2026-09-22T16:26:14Z"
+    },
+    {
+      "id": "25151a56-88f9-55e2-83dc-53bb019648a2",
+      "name": "Tio Maicon, Tia Sheila, Diulya e Mattheo",
+      "whatsapp": "555180417318",
+      "token": "qan9X_ByxBNPu-yioovYjQ",
+      "created_at": "2026-09-22T18:25:15Z"
+    },
+    {
+      "id": "c7939f64-81fe-57e9-821c-ae9d2e5206e9",
+      "name": "Tio Tiago",
+      "whatsapp": "555185564906",
+      "token": "xYingd2WzYfY2TxBmWUvEA",
+      "created_at": "2026-09-22T16:28:37Z"
+    },
+    {
+      "id": "a0c0625f-a0c7-5adb-b9a9-22ea036c75d3",
+      "name": "Vó Izaura",
+      "whatsapp": "555193725234",
+      "token": "pATyyF-w46FXgTLQh7sbBQ",
+      "created_at": "2026-09-22T19:19:38Z"
+    },
+    {
+      "id": "1f0fe83f-72f0-5a8a-bf23-3b8095d48397",
+      "name": "Vô Adão e Vó Nika",
+      "whatsapp": "555197295989",
+      "token": "HphXqUVJ9CVCb7ZKmtndzw",
+      "created_at": "2026-09-22T18:22:43Z"
+    },
+    {
+      "id": "76504dff-0d31-587e-8266-95c276458ddf",
+      "name": "Vô Fernando",
+      "whatsapp": "555192641606",
+      "token": "AExfSpIzOuUP8NgCPZXMJg",
+      "created_at": "2026-09-22T19:34:20Z"
+    },
+    {
+      "id": "864091df-82ca-532a-9ad9-06db6b79a995",
+      "name": "Vô Gilson",
+      "whatsapp": "555193133926",
+      "token": "597QOG9F10Lrz5vOr6pWmQ",
+      "created_at": "2026-09-22T19:33:10Z"
+    },
+    {
+      "id": "ed67d04b-214a-5b54-97ae-b1fbc8d4b9dd",
+      "name": "Vô Zé e Andreia",
+      "whatsapp": "555184891938",
+      "token": "VW9B5gYHGYx3MvhLJiQzsg",
+      "created_at": "2026-09-22T18:22:19Z"
+    },
+    {
+      "id": "91e5c709-830f-5fc5-8076-3907a264fe64",
+      "name": "Wanessa e Guilherme",
+      "whatsapp": "555191009992",
+      "token": "Lm4pfHkp21qWdBvh43_mow",
+      "created_at": "2026-09-22T19:12:22Z"
+    }
+  ],
+  "reservations": [],
+  "gifts": [],
+  "deletedGiftIds": [],
+  "deletedGuestIds": []
+}
