@@ -36,7 +36,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Erick e Ana." },
-      { name: "x-deploy-marker", content: "GUESTS-RECOVER-FAST-20260922" },
+      { name: "x-deploy-marker", content: "RESTORE-21SET-20260922" },
     ],
   }),
   component: Admin,

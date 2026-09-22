@@ -10,7 +10,7 @@ Os convidados, presentes e escolhas ficam em `/data/local-store.json`.
 
 No EasyPanel, no serviço, crie um volume apontando para `/data` **antes** de implantar. Sem esse volume, cada Implantar recria o container.
 
-A lista recuperada do WhatsApp (46 convidados) também vai no arquivo `data/local-store.seed.json` dentro da imagem. Na subida o sistema junta essa lista com o que já estiver no volume, sem apagar ninguém novo.
+A lista recuperada até 21/09/2026 (26 convidados do painel) também vai no arquivo `data/local-store.seed.json` dentro da imagem. Na subida o sistema aplica esse snapshot uma vez e depois só acrescenta convidados novos, sem apagar ninguém.
 
 ## Rodar local
 

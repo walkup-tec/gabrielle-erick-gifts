@@ -38,6 +38,7 @@ export type StoredGift = {
 };
 
 type Store = {
+  snapshotId: string;
   guests: StoredGuest[];
   reservations: StoredReservation[];
   gifts: StoredGift[];
@@ -46,6 +47,7 @@ type Store = {
 };
 
 const emptyStore = (): Store => ({
+  snapshotId: "",
   guests: [],
   reservations: [],
   gifts: [],
@@ -113,6 +115,7 @@ async function resolveStorePath() {
 
 function normalizeStore(parsed: Partial<Store> | null | undefined): Store {
   return {
+    snapshotId: typeof parsed?.snapshotId === "string" ? parsed.snapshotId : "",
     guests: Array.isArray(parsed?.guests) ? parsed.guests : [],
     reservations: Array.isArray(parsed?.reservations) ? parsed.reservations : [],
     gifts: Array.isArray(parsed?.gifts) ? parsed.gifts : [],
@@ -131,6 +134,19 @@ async function readJson(path: string): Promise<Store | null> {
 }
 
 function mergeSeedInto(store: Store, seed: Store) {
+  if (seed.snapshotId && store.snapshotId !== seed.snapshotId) {
+    store.snapshotId = seed.snapshotId;
+    store.guests = seed.guests.map((guest) => ({ ...guest }));
+    store.reservations = seed.reservations.map((reservation) => ({
+      ...reservation,
+      items: reservation.items.map((item) => ({ ...item })),
+    }));
+    store.gifts = seed.gifts.map((gift) => ({ ...gift }));
+    store.deletedGiftIds = [...seed.deletedGiftIds];
+    store.deletedGuestIds = [...seed.deletedGuestIds];
+    return true;
+  }
+
   let changed = false;
   const deletedGuests = new Set(store.deletedGuestIds);
   const byId = new Map(store.guests.map((guest) => [guest.id, guest]));
