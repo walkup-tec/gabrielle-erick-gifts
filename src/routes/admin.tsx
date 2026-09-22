@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Loader2, LogOut, MessageCircle, Pencil, Search, Share2, Trash2 } from "lucide-react";
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Erick e Ana." },
-      { name: "x-deploy-marker", content: "EVO-INSTANCE-RESOLVE-20260911" },
+      { name: "x-deploy-marker", content: "GIFT-SAVE-LOCAL-20260922" },
     ],
   }),
   component: Admin,
@@ -242,12 +242,14 @@ function Presentes() {
   const excluir = useServerFn(adminDeleteGift);
   const recarregar = useRecarregar();
   const { data, isLoading } = useQuery({ queryKey: ["admin", "gifts"], queryFn: () => listar() });
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [id, setId] = useState<string | undefined>();
   const [nome, setNome] = useState("");
   const [qtd, setQtd] = useState("1");
   const [unidade, setUnidade] = useState("Item");
   const [busca, setBusca] = useState("");
+  const [salvando, setSalvando] = useState(false);
   const filtrados = useMemo(
     () =>
       (data ?? []).filter((g) =>
@@ -258,24 +260,42 @@ function Presentes() {
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
-    const r = await salvar({
-      data: { id, name: nome.trim(), desired: Number(qtd) || 1, unit: unidade.trim() || "Item" },
-    });
-    if (!r.ok) {
-      toast.error(r.error ?? "Não foi possível salvar.");
-      return;
+    setSalvando(true);
+    try {
+      const r = await salvar({
+        data: { id, name: nome.trim(), desired: Number(qtd) || 1, unit: unidade.trim() || "Item" },
+      });
+      if (!r?.ok) {
+        toast.error((r && "error" in r && r.error) || "Não foi possível salvar o presente.");
+        return;
+      }
+      toast.success(id ? "Presente atualizado." : "Presente adicionado.");
+      setId(undefined);
+      setNome("");
+      setQtd("1");
+      setUnidade("Item");
+      recarregar();
+    } catch (error) {
+      console.error(error);
+      toast.error("Não foi possível salvar o presente. Tente de novo.");
+    } finally {
+      setSalvando(false);
     }
-    toast.success("Presente salvo.");
-    setId(undefined);
-    setNome("");
-    setQtd("1");
-    setUnidade("Item");
-    recarregar();
+  }
+
+  function editar(g: { id: string; name: string; desired: number; unit: string }) {
+    setId(g.id);
+    setNome(g.name);
+    setQtd(String(g.desired));
+    setUnidade(g.unit);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => document.getElementById("g-nome")?.focus(), 200);
   }
 
   return (
     <div className="mt-4 space-y-4">
-      <form onSubmit={enviar} className="rounded-2xl border bg-card p-4">
+      <form ref={formRef} onSubmit={enviar} className="rounded-2xl border bg-card p-4">
+        {id ? <p className="mb-3 text-sm font-medium text-primary">Editando: {nome}</p> : null}
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">
             <Label htmlFor="g-nome">Nome do presente</Label>
@@ -315,8 +335,9 @@ function Presentes() {
           </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <Button type="submit" className="rounded-full">
-            {id ? "Salvar alterações" : "Adicionar presente"}
+          <Button type="submit" className="rounded-full" disabled={salvando}>
+            {salvando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : null}
+            {id ? (salvando ? "Salvando..." : "Salvar alterações") : salvando ? "Salvando..." : "Adicionar presente"}
           </Button>
           {id && (
             <Button
@@ -365,15 +386,11 @@ function Presentes() {
                 </div>
                 <div className="flex gap-1">
                   <Button
+                    type="button"
                     size="icon"
                     variant="ghost"
                     aria-label="Editar"
-                    onClick={() => {
-                      setId(g.id);
-                      setNome(g.name);
-                      setQtd(String(g.desired));
-                      setUnidade(g.unit);
-                    }}
+                    onClick={() => editar(g)}
                   >
                     <Pencil className="h-4 w-4" aria-hidden />
                   </Button>
