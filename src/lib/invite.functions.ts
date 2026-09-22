@@ -56,26 +56,26 @@ async function loadGifts() {
       ]);
     if (giftsError) throw giftsError;
     if (itemsError) throw itemsError;
-    const { withLocalReserved } = await import("@/lib/local-store.server");
-    if (!gifts?.length) return withLocalReserved(fromSeedGifts());
+    const { mergeLocalGifts, withLocalReserved } = await import("@/lib/local-store.server");
     const reserved = new Map<string, number>();
     for (const item of items ?? []) {
       reserved.set(item.gift_id, (reserved.get(item.gift_id) ?? 0) + item.quantity);
     }
-    return withLocalReserved(
-      gifts.map((g) => ({
-        id: g.id,
-        name: g.name,
-        desired: g.desired_quantity,
-        unit: unitOf(g.name, "unit" in g ? g.unit : null),
-        reserved: reserved.get(g.id) ?? 0,
-        available: Math.max(0, g.desired_quantity - (reserved.get(g.id) ?? 0)),
-      })),
-    );
+    const base = !gifts?.length
+      ? fromSeedGifts()
+      : gifts.map((g) => ({
+          id: g.id,
+          name: g.name,
+          desired: g.desired_quantity,
+          unit: unitOf(g.name, "unit" in g ? g.unit : null),
+          reserved: reserved.get(g.id) ?? 0,
+          available: Math.max(0, g.desired_quantity - (reserved.get(g.id) ?? 0)),
+        }));
+    return withLocalReserved(await mergeLocalGifts(base));
   } catch (error) {
     console.error("[convite] usando lista inicial de presentes", error);
-    const { withLocalReserved } = await import("@/lib/local-store.server");
-    return withLocalReserved(fromSeedGifts());
+    const { mergeLocalGifts, withLocalReserved } = await import("@/lib/local-store.server");
+    return withLocalReserved(await mergeLocalGifts(fromSeedGifts()));
   }
 }
 
