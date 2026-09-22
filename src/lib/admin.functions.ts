@@ -50,36 +50,35 @@ async function computeGifts(db: Awaited<ReturnType<typeof ensureAdmin>>): Promis
     ]);
     if (e1) throw e1;
     if (e2) throw e2;
-    const { withLocalReserved } = await import("@/lib/local-store.server");
-    if (!gifts?.length) return withLocalReserved(fromSeedGifts());
+    const { mergeLocalGifts, withLocalReserved } = await import("@/lib/local-store.server");
     const reserved = new Map<string, number>();
     for (const i of items ?? []) reserved.set(i.gift_id, (reserved.get(i.gift_id) ?? 0) + i.quantity);
-
-    return withLocalReserved(
-      gifts.map((g) => {
-        const r = reserved.get(g.id) ?? 0;
-        const available = Math.max(0, g.desired_quantity - r);
-        return {
-          id: g.id,
-          name: g.name,
-          desired: g.desired_quantity,
-          unit: unitOf(g.name, "unit" in g ? g.unit : null),
-          reserved: r,
-          available,
-          status:
-            available === 0
-              ? ("Quantidade concluída" as const)
-              : r > 0
-                ? ("Parcialmente presenteado" as const)
-                : ("Disponível" as const),
-          created_at: g.created_at,
-        };
-      }),
-    );
+    const base = !gifts?.length
+      ? fromSeedGifts()
+      : gifts.map((g) => {
+          const r = reserved.get(g.id) ?? 0;
+          const available = Math.max(0, g.desired_quantity - r);
+          return {
+            id: g.id,
+            name: g.name,
+            desired: g.desired_quantity,
+            unit: unitOf(g.name, "unit" in g ? g.unit : null),
+            reserved: r,
+            available,
+            status:
+              available === 0
+                ? ("Quantidade concluída" as const)
+                : r > 0
+                  ? ("Parcialmente presenteado" as const)
+                  : ("Disponível" as const),
+            created_at: g.created_at,
+          };
+        });
+    return withLocalReserved(await mergeLocalGifts(base));
   } catch (error) {
     console.error("[admin] usando lista inicial de presentes", error);
-    const { withLocalReserved } = await import("@/lib/local-store.server");
-    return withLocalReserved(fromSeedGifts());
+    const { mergeLocalGifts, withLocalReserved } = await import("@/lib/local-store.server");
+    return withLocalReserved(await mergeLocalGifts(fromSeedGifts()));
   }
 }
 
@@ -151,35 +150,69 @@ export const adminSaveGift = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin();
-    if (data.id) {
-      const gifts = await computeGifts(db);
-      const current = gifts.find((g) => g.id === data.id);
-      if (current && data.desired < current.reserved) {
-        return { ok: false, error: `Já existem ${current.reserved} unidades reservadas.` };
+    try {
+      const local = await import("@/lib/local-store.server");
+      const id = data.id ?? crypto.randomUUID();
+
+      try {
+        const db = await ensureAdmin();
+        if (data.id) {
+          const gifts = await computeGifts(db);
+          const current = gifts.find((g) => g.id === data.id);
+          if (current && data.desired < current.reserved) {
+            return { ok: false as const, error: `Já existem ${current.reserved} unidades reservadas.` };
+          }
+          const withUnit = await db
+            .from("gifts")
+            .update({ name: data.name, desired_quantity: data.desired, unit: data.unit })
+            .eq("id", data.id);
+          if (withUnit.error) {
+            await db.from("gifts").update({ name: data.name, desired_quantity: data.desired }).eq("id", data.id);
+          }
+        } else {
+          const withUnit = await db.from("gifts").insert({
+            id,
+            name: data.name,
+            desired_quantity: data.desired,
+            unit: data.unit,
+          });
+          if (withUnit.error) {
+            await db.from("gifts").insert({ id, name: data.name, desired_quantity: data.desired });
+          }
+        }
+      } catch (error) {
+        console.error("[admin] salvar presente supabase", error);
       }
-      const { error } = await db
-        .from("gifts")
-        .update({ name: data.name, desired_quantity: data.desired, unit: data.unit })
-        .eq("id", data.id);
-      if (error) throw error;
-    } else {
-      const { error } = await db
-        .from("gifts")
-        .insert({ name: data.name, desired_quantity: data.desired, unit: data.unit });
-      if (error) throw error;
+
+      const previous = (await local.listLocalGifts()).find((g) => g.id === id);
+      await local.upsertLocalGift({
+        id,
+        name: data.name,
+        desired: data.desired,
+        unit: data.unit,
+        created_at: previous?.created_at ?? new Date().toISOString(),
+      });
+      return { ok: true as const };
+    } catch (error) {
+      console.error("[admin] salvar presente", error);
+      return { ok: false as const, error: "Não foi possível salvar o presente." };
     }
-    return { ok: true };
   });
 
 export const adminDeleteGift = createServerFn({ method: "POST" })
   .middleware([requireMaster])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const db = await ensureAdmin();
-    const { error } = await db.from("gifts").delete().eq("id", data.id);
-    if (error) return { ok: false, error: "Este presente já foi escolhido por alguém." };
-    return { ok: true };
+    const local = await import("@/lib/local-store.server");
+    try {
+      const db = await ensureAdmin();
+      const { error } = await db.from("gifts").delete().eq("id", data.id);
+      if (error) console.error("[admin] excluir presente supabase", error);
+    } catch (error) {
+      console.error("[admin] excluir presente supabase", error);
+    }
+    await local.deleteLocalGift(data.id);
+    return { ok: true as const };
   });
 
 /* --------------------------------- Convidados --------------------------------- */
