@@ -27,12 +27,22 @@ export type StoredReservation = {
   items: StoredReservationItem[];
 };
 
+export type StoredGift = {
+  id: string;
+  name: string;
+  desired: number;
+  unit: string;
+  created_at: string;
+};
+
 type Store = {
   guests: StoredGuest[];
   reservations: StoredReservation[];
+  gifts: StoredGift[];
+  deletedGiftIds: string[];
 };
 
-const emptyStore = (): Store => ({ guests: [], reservations: [] });
+const emptyStore = (): Store => ({ guests: [], reservations: [], gifts: [], deletedGiftIds: [] });
 
 function storePath() {
   return process.env["LOCAL_STORE_PATH"] || `${process.cwd()}/data/local-store.json`;
@@ -56,6 +66,8 @@ async function readStore(): Promise<Store> {
     return {
       guests: Array.isArray(parsed.guests) ? parsed.guests : [],
       reservations: Array.isArray(parsed.reservations) ? parsed.reservations : [],
+      gifts: Array.isArray(parsed.gifts) ? parsed.gifts : [],
+      deletedGiftIds: Array.isArray(parsed.deletedGiftIds) ? parsed.deletedGiftIds : [],
     };
   } catch {
     return emptyStore();
@@ -151,6 +163,71 @@ export async function setLocalReservationItem(
     await writeStore(store);
     return reservation;
   });
+}
+
+export async function listLocalGifts() {
+  return (await readStore()).gifts;
+}
+
+export async function upsertLocalGift(gift: StoredGift) {
+  return withLock(async () => {
+    const store = await readStore();
+    const index = store.gifts.findIndex((g) => g.id === gift.id);
+    if (index >= 0) store.gifts[index] = { ...store.gifts[index], ...gift };
+    else store.gifts.push(gift);
+    store.deletedGiftIds = store.deletedGiftIds.filter((id) => id !== gift.id);
+    await writeStore(store);
+    return gift;
+  });
+}
+
+export async function deleteLocalGift(id: string) {
+  return withLock(async () => {
+    const store = await readStore();
+    store.gifts = store.gifts.filter((g) => g.id !== id);
+    if (!store.deletedGiftIds.includes(id)) store.deletedGiftIds.push(id);
+    await writeStore(store);
+  });
+}
+
+export async function mergeLocalGifts<
+  T extends {
+    id: string;
+    name: string;
+    desired: number;
+    unit: string;
+    reserved: number;
+    available: number;
+    status?: string;
+    created_at?: string;
+  },
+>(gifts: T[]): Promise<T[]> {
+  const store = await readStore();
+  const deleted = new Set(store.deletedGiftIds);
+  const byId = new Map(gifts.filter((g) => !deleted.has(g.id)).map((g) => [g.id, g]));
+  for (const local of store.gifts) {
+    if (deleted.has(local.id)) continue;
+    const current = byId.get(local.id);
+    const reserved = current?.reserved ?? 0;
+    const available = Math.max(0, local.desired - reserved);
+    byId.set(local.id, {
+      ...(current ?? { reserved: 0, created_at: local.created_at }),
+      id: local.id,
+      name: local.name,
+      desired: local.desired,
+      unit: local.unit,
+      reserved,
+      available,
+      status:
+        available === 0
+          ? "Quantidade concluída"
+          : reserved > 0
+            ? "Parcialmente presenteado"
+            : "Disponível",
+      created_at: local.created_at || current?.created_at || "",
+    } as T);
+  }
+  return [...byId.values()];
 }
 
 export async function reservedByGift() {
