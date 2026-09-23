@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Escolha um presente com carinho para o começo da nossa casa.",
       },
-      { name: "x-deploy-marker", content: "RESTORE-21SET-20260922" },
+      { name: "x-deploy-marker", content: "RESTORE-5ESCOLHAS-20260923" },
     ],
   }),
   component: Convite,

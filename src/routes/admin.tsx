@@ -36,7 +36,7 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex,nofollow" },
       { property: "og:title", content: "Área do casal" },
       { property: "og:description", content: "Painel reservado de Erick e Ana." },
-      { name: "x-deploy-marker", content: "RESTORE-21SET-20260922" },
+      { name: "x-deploy-marker", content: "RESTORE-5ESCOLHAS-20260923" },
     ],
   }),
   component: Admin,
@@ -745,6 +745,11 @@ function Escolhas() {
           </div>
 
           <ul className="mt-3 space-y-2">
+            {r.items.length === 0 ? (
+              <li className="text-sm text-muted-foreground">
+                Presentes desta escolha ainda não estão na lista. Adicione abaixo.
+              </li>
+            ) : null}
             {r.items.map((i) => (
               <li key={i.id} className="flex items-center justify-between gap-2 text-sm">
                 <span>{i.name}</span>

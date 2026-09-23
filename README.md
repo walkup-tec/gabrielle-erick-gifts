@@ -10,7 +10,7 @@ Os convidados, presentes e escolhas ficam em `/data/local-store.json`.
 
 No EasyPanel, no serviço, crie um volume apontando para `/data` **antes** de implantar. Sem esse volume, cada Implantar recria o container.
 
-A lista recuperada até 21/09/2026 (26 convidados do painel) também vai no arquivo `data/local-store.seed.json` dentro da imagem. Na subida o sistema aplica esse snapshot uma vez e depois só acrescenta convidados novos, sem apagar ninguém.
+A lista do painel até 21/09 (26 convidados, 5 escolhas) vai no arquivo `data/local-store.seed.json`.
 
 ## Rodar local
 
