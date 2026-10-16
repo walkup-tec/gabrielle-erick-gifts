@@ -210,6 +210,35 @@ export const adminSendGuestInvite = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const adminSendGuestNotice = createServerFn({ method: "POST" })
+  .middleware([requireMaster])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), tipo: z.enum(["bingo", "lembrete"]) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const local = await import("@/lib/local-store.server");
+    const guest = await local.findGuestById(data.id);
+    if (!guest) {
+      return { ok: false as const, error: "Convidado não encontrado." };
+    }
+    if (!guest.whatsapp) {
+      return { ok: false as const, error: "Este convidado não tem WhatsApp." };
+    }
+    const { linkConvite, mensagemBingoWhatsapp, mensagemLembreteWhatsapp } = await import(
+      "@/lib/whatsapp-convite"
+    );
+    const text =
+      data.tipo === "bingo"
+        ? mensagemBingoWhatsapp(guest.name)
+        : mensagemLembreteWhatsapp(guest.name, linkConvite(guest.token));
+    const { tentarEnviarTextoWhatsapp } = await import("@/lib/evolution.server");
+    const enviado = await tentarEnviarTextoWhatsapp(guest.whatsapp, text);
+    if (!enviado.ok) {
+      return { ok: false as const, error: enviado.error };
+    }
+    return { ok: true as const };
+  });
+
 /* ---------------------------------- Escolhas ---------------------------------- */
 
 export const adminListReservations = createServerFn({ method: "GET" })

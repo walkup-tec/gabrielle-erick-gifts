@@ -1,3 +1,41 @@
+export function mensagemBingoWhatsapp(nome: string) {
+  return [
+    `Oiii ${nome}!💚`,
+    "Tem novidade para o nosso Chá dos Noivos! 💍✨",
+    "Quem aí gosta de um bom bingo? 👀",
+    "",
+    "Então já prepara a sorte, porque vamos ter um bingo especial, com prêmios incríveis e aquele gostinho de diversão em família!🥳",
+    "",
+    "🎟️ Cartela por apenas R$ 5,00!",
+    "",
+    "🏆 Confira os prêmios:",
+    "🥇 1º lugar: Licor Sheridan’s Café & Leite",
+    "🥈 2º lugar: Champagne Freixenet",
+    "🥉 3º lugar: Uma surpresa especial",
+    "",
+    "E tem um motivo ainda mais especial para participar: todo o valor arrecadado com a venda das cartelas será destinado a ajudar nos custos do nosso casamento!💚",
+    "Cada cartela comprada é uma ajudinha para realizarmos esse sonho e deixa essa caminhada ainda mais especial para nós!",
+    "Como adquirir | Envie o valor referente a quantidade de cartelas para o pix:",
+    "*Erickcosta621@gmail.com*",
+    "E envie o comprovante para a noiva (eu🤭)",
+  ].join("\n");
+}
+
+export function mensagemLembreteWhatsapp(nome: string, link: string) {
+  return [
+    `Ah, ${nome}... um lembrete carinhoso! Para quem ainda não selecionou o presente na nossa lista, estamos reenviando o link abaixo.`,
+    "",
+    "Se tiver qualquer dificuldade ou não conseguir escolher, pode nos chamar que ajudamos com muito carinho! 🥰",
+    "",
+    `🔗 ${link}`,
+    "",
+    "Agradecemos de coração por todo o carinho e por fazerem parte dessa etapa tão especial da nossa vida! 🥹💚",
+    "",
+    "Com carinho,",
+    "Érick & Ana💚",
+  ].join("\n");
+}
+
 export function mensagemConviteWhatsapp(nome: string, link: string) {
   return [
     `Olá, ${nome}! 💚`,

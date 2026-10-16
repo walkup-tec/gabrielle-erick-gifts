@@ -22,6 +22,7 @@ import {
   adminSaveGift,
   adminSaveGuest,
   adminSendGuestInvite,
+  adminSendGuestNotice,
   adminSession,
   adminSetReservationItem,
   adminSetReservationStatus,
@@ -439,6 +440,7 @@ function Convidados() {
   const listar = useServerFn(adminListGuests);
   const salvar = useServerFn(adminSaveGuest);
   const reenviar = useServerFn(adminSendGuestInvite);
+  const avisar = useServerFn(adminSendGuestNotice);
   const excluir = useServerFn(adminDeleteGuest);
   const recarregar = useRecarregar();
   const { data, isLoading } = useQuery({
@@ -452,7 +454,9 @@ function Convidados() {
   const [whats, setWhats] = useState("");
   const [busca, setBusca] = useState("");
   const [salvando, setSalvando] = useState(false);
-  const [enviandoId, setEnviandoId] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState<{ id: string; acao: "convite" | "bingo" | "lembrete" } | null>(
+    null,
+  );
   const filtrados = useMemo(
     () =>
       (data ?? []).filter((c) =>
@@ -492,6 +496,29 @@ function Convidados() {
       toast.error("Não foi possível salvar o convidado. Tente de novo.");
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function enviarWhatsapp(id: string, acao: "convite" | "bingo" | "lembrete") {
+    setEnviando({ id, acao });
+    try {
+      const r =
+        acao === "convite" ? await reenviar({ data: { id } }) : await avisar({ data: { id, tipo: acao } });
+      if (!r.ok) {
+        toast.error(r.error ?? "Não foi possível enviar o WhatsApp.");
+        return;
+      }
+      toast.success(
+        acao === "bingo"
+          ? "Mensagem do bingo enviada."
+          : acao === "lembrete"
+            ? "Lembrete enviado no WhatsApp."
+            : "Convite enviado no WhatsApp.",
+      );
+    } catch {
+      toast.error("Não foi possível enviar o WhatsApp.");
+    } finally {
+      setEnviando(null);
     }
   }
 
@@ -576,24 +603,10 @@ function Convidados() {
                       size="icon"
                       variant="ghost"
                       aria-label="Enviar convite no WhatsApp"
-                      disabled={enviandoId === c.id}
-                      onClick={async () => {
-                        setEnviandoId(c.id);
-                        try {
-                          const r = await reenviar({ data: { id: c.id } });
-                          if (!r.ok) {
-                            toast.error(r.error ?? "Não foi possível enviar o WhatsApp.");
-                            return;
-                          }
-                          toast.success("Convite enviado no WhatsApp.");
-                        } catch {
-                          toast.error("Não foi possível enviar o WhatsApp.");
-                        } finally {
-                          setEnviandoId(null);
-                        }
-                      }}
+                      disabled={enviando?.id === c.id}
+                      onClick={() => enviarWhatsapp(c.id, "convite")}
                     >
-                      {enviandoId === c.id ? (
+                      {enviando?.id === c.id && enviando.acao === "convite" ? (
                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                       ) : (
                         <MessageCircle className="h-4 w-4" aria-hidden />
@@ -649,6 +662,36 @@ function Convidados() {
                   </Button>
                 </div>
               </div>
+              {c.whatsapp ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    disabled={enviando?.id === c.id}
+                    onClick={() => enviarWhatsapp(c.id, "bingo")}
+                  >
+                    {enviando?.id === c.id && enviando.acao === "bingo" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                    ) : null}
+                    Bingo
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full"
+                    disabled={enviando?.id === c.id}
+                    onClick={() => enviarWhatsapp(c.id, "lembrete")}
+                  >
+                    {enviando?.id === c.id && enviando.acao === "lembrete" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                    ) : null}
+                    Lembrete
+                  </Button>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>

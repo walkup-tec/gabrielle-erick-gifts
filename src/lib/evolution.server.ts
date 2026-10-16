@@ -102,7 +102,7 @@ async function resolveConnection(urls: string[], key: string, configured: string
   return { url: urls[0], instanceName: configured, status: undefined, unreachable: true as const };
 }
 
-export async function enviarConviteWhatsapp(nome: string, whatsapp: string, token: string) {
+export async function enviarTextoWhatsapp(whatsapp: string, text: string) {
   const { urls, key, instance } = evoConfig();
   if (!urls.length || !key) {
     return { ok: false as const, error: "Evolution API não configurada." };
@@ -120,7 +120,6 @@ export async function enviarConviteWhatsapp(nome: string, whatsapp: string, toke
     return { ok: false as const, error: "O WhatsApp da instância está desconectado." };
   }
 
-  const text = mensagemConviteWhatsapp(nome, linkConvite(token));
   const endpoint = `${connection.url}/message/sendText/${encodeURIComponent(connection.instanceName)}`;
 
   const v2 = await requestJson(endpoint, key, {
@@ -139,7 +138,7 @@ export async function enviarConviteWhatsapp(nome: string, whatsapp: string, toke
   });
   if (v1.ok) return { ok: true as const };
 
-  console.error("[evo] falha ao enviar convite", {
+  console.error("[evo] falha ao enviar mensagem", {
     instance: connection.instanceName,
     v2: { status: v2.status, json: v2.json },
     v1: { status: v1.status, json: v1.json },
@@ -150,11 +149,19 @@ export async function enviarConviteWhatsapp(nome: string, whatsapp: string, toke
   };
 }
 
-export async function tentarEnviarConviteWhatsapp(nome: string, whatsapp: string, token: string) {
+export async function enviarConviteWhatsapp(nome: string, whatsapp: string, token: string) {
+  return enviarTextoWhatsapp(whatsapp, mensagemConviteWhatsapp(nome, linkConvite(token)));
+}
+
+export async function tentarEnviarTextoWhatsapp(whatsapp: string, text: string) {
   try {
-    return await enviarConviteWhatsapp(nome, whatsapp, token);
+    return await enviarTextoWhatsapp(whatsapp, text);
   } catch (error) {
     console.error("[evo] erro inesperado", error);
     return { ok: false as const, error: "Não foi possível enviar o WhatsApp agora." };
   }
+}
+
+export async function tentarEnviarConviteWhatsapp(nome: string, whatsapp: string, token: string) {
+  return tentarEnviarTextoWhatsapp(whatsapp, mensagemConviteWhatsapp(nome, linkConvite(token)));
 }
