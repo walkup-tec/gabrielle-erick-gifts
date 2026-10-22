@@ -88,13 +88,12 @@ async function resolveConnection(urls: string[], key: string, configured: string
     const fetched = await requestJson(`${url}/instance/fetchInstances`, key, { method: "GET" }, 5000);
     if (!fetched.ok || !Array.isArray(fetched.json)) continue;
     const instances = fetched.json as EvoInstance[];
-    const aberta = instances.find(
-      (item) => (item.connectionStatus || "").toLowerCase() === "open" && item.name,
-    );
+    const doProjeto = instances.filter((item) => pertenceAoProjeto(item.name || "", configured));
+    const aberta = doProjeto.find((item) => (item.connectionStatus || "").toLowerCase() === "open");
     if (aberta?.name) {
       return { url, instanceName: aberta.name, status: "open" };
     }
-    const matches = instances.filter((item) => instanceMatches(item, configured));
+    const matches = doProjeto.filter((item) => instanceMatches(item, configured));
     const open = matches.find((item) => item.connectionStatus === "open") ?? matches[0];
     if (open?.name) {
       return { url, instanceName: open.name, status: open.connectionStatus };
@@ -184,6 +183,20 @@ function nomeInstancia(nome: string) {
     .slice(0, 40);
 }
 
+function pertenceAoProjeto(nome: string, configured: string) {
+  const base = nomeInstancia(configured);
+  if (!base || !nome) return false;
+  return nome === base || nome.startsWith(`${base}-`);
+}
+
+function nomeInstanciaProjeto(nomeInformado: string, configured: string) {
+  const base = nomeInstancia(configured);
+  const slug = nomeInstancia(nomeInformado);
+  if (base.length < 2 || slug.length < 2) return "";
+  if (slug === base || slug.startsWith(`${base}-`)) return slug.slice(0, 40);
+  return `${base}-${slug}`.slice(0, 40);
+}
+
 function imagemQr(valor: string) {
   if (valor.startsWith("data:")) return valor;
   return `data:image/png;base64,${valor}`;
@@ -196,7 +209,7 @@ function lerQr(json: unknown) {
   return typeof bruto === "string" && bruto ? imagemQr(bruto) : "";
 }
 
-function lerConexoes(json: unknown): ConexaoWhatsapp[] {
+function lerConexoes(json: unknown, configured: string): ConexaoWhatsapp[] {
   if (!Array.isArray(json)) return [];
   return json.flatMap((item) => {
     if (!item || typeof item !== "object") return [];
@@ -204,7 +217,7 @@ function lerConexoes(json: unknown): ConexaoWhatsapp[] {
     const nome = instancia.name || instancia.instance?.instanceName || "";
     const status = (instancia.connectionStatus || instancia.instance?.state || "").toLowerCase();
     const numero = digits(instancia.ownerJid || "");
-    if (!nome || status !== "open" || numero.length < 12) return [];
+    if (!pertenceAoProjeto(nome, configured) || status !== "open" || numero.length < 12) return [];
     return [{ nome, numero }];
   });
 }
@@ -230,15 +243,15 @@ export async function listarConexoesWhatsapp() {
       conexoes: [] as ConexaoWhatsapp[],
     };
   }
-  return { ok: true as const, conexoes: lerConexoes(alcançada.json) };
+  return { ok: true as const, conexoes: lerConexoes(alcançada.json, evoConfig().instance) };
 }
 
 export async function conectarWhatsapp(nomeInformado: string) {
-  const nome = nomeInstancia(nomeInformado);
+  const { urls, key, instance } = evoConfig();
+  const nome = nomeInstanciaProjeto(nomeInformado, instance);
   if (nome.length < 2) {
     return { ok: false as const, error: "Informe um nome para a conexão." };
   }
-  const { urls, key } = evoConfig();
   if (!urls.length || !key) {
     return { ok: false as const, error: "Evolution API não configurada." };
   }
@@ -247,7 +260,7 @@ export async function conectarWhatsapp(nomeInformado: string) {
     return { ok: false as const, error: "A Evolution API não está acessível neste momento." };
   }
 
-  const jaConectada = lerConexoes(alcançada.json).find((item) => item.nome === nome);
+  const jaConectada = lerConexoes(alcançada.json, instance).find((item) => item.nome === nome);
   if (jaConectada) return { ok: true as const, conectado: true as const, numero: jaConectada.numero };
 
   const criada = await requestJson(
