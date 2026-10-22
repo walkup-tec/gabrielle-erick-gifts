@@ -171,7 +171,7 @@ export async function tentarEnviarConviteWhatsapp(nome: string, whatsapp: string
   return tentarEnviarTextoWhatsapp(whatsapp, mensagemConviteWhatsapp(nome, linkConvite(token)));
 }
 
-export type ConexaoWhatsapp = { nome: string; numero: string };
+export type ConexaoWhatsapp = { nome: string; numero: string; conectada: boolean; rotulo: string };
 
 function nomeInstancia(nome: string) {
   return nome
@@ -209,6 +209,12 @@ function lerQr(json: unknown) {
   return typeof bruto === "string" && bruto ? imagemQr(bruto) : "";
 }
 
+function rotuloInstancia(nome: string, configured: string) {
+  const base = nomeInstancia(configured);
+  if (nome.startsWith(`${base}-`)) return nome.slice(base.length + 1) || nome;
+  return nome;
+}
+
 function lerConexoes(json: unknown, configured: string): ConexaoWhatsapp[] {
   if (!Array.isArray(json)) return [];
   return json.flatMap((item) => {
@@ -217,8 +223,15 @@ function lerConexoes(json: unknown, configured: string): ConexaoWhatsapp[] {
     const nome = instancia.name || instancia.instance?.instanceName || "";
     const status = (instancia.connectionStatus || instancia.instance?.state || "").toLowerCase();
     const numero = digits(instancia.ownerJid || "");
-    if (!pertenceAoProjeto(nome, configured) || status !== "open" || numero.length < 12) return [];
-    return [{ nome, numero }];
+    if (!pertenceAoProjeto(nome, configured)) return [];
+    return [
+      {
+        nome,
+        numero: numero.length >= 12 ? numero : "",
+        conectada: status === "open",
+        rotulo: rotuloInstancia(nome, configured),
+      },
+    ];
   });
 }
 
@@ -260,7 +273,7 @@ export async function conectarWhatsapp(nomeInformado: string) {
     return { ok: false as const, error: "A Evolution API não está acessível neste momento." };
   }
 
-  const jaConectada = lerConexoes(alcançada.json, instance).find((item) => item.nome === nome);
+  const jaConectada = lerConexoes(alcançada.json, instance).find((item) => item.nome === nome && item.conectada);
   if (jaConectada) return { ok: true as const, conectado: true as const, numero: jaConectada.numero };
 
   const criada = await requestJson(
@@ -274,6 +287,62 @@ export async function conectarWhatsapp(nomeInformado: string) {
   );
   const qrCriado = lerQr(criada.json);
   if (qrCriado) return { ok: true as const, qr: qrCriado };
+
+  const conexao = await requestJson(
+    `${alcançada.url}/instance/connect/${encodeURIComponent(nome)}`,
+    key,
+    { method: "GET" },
+    20000,
+  );
+  const qr = lerQr(conexao.json);
+  if (qr) return { ok: true as const, qr };
+  if (conexao.status === 401 || conexao.status === 403) {
+    return {
+      ok: false as const,
+      error: traduzErro(conexao.status, conexao.json, "Não foi possível abrir o QR Code."),
+    };
+  }
+  return { ok: true as const, aguardando: true as const };
+}
+
+function conexaoDoProjeto(nomeInformado: string, configured: string) {
+  const nome = nomeInstancia(nomeInformado);
+  if (!pertenceAoProjeto(nome, configured)) return "";
+  return nome;
+}
+
+export async function excluirConexaoWhatsapp(nomeInformado: string) {
+  const { urls, key, instance } = evoConfig();
+  const nome = conexaoDoProjeto(nomeInformado, instance);
+  if (!nome) return { ok: false as const, error: "Essa conexão não pertence a este projeto." };
+  if (!urls.length || !key) return { ok: false as const, error: "Evolution API não configurada." };
+  const alcançada = await urlAlcancavel(urls, key);
+  if (!alcançada) return { ok: false as const, error: "A Evolution API não está acessível neste momento." };
+
+  const resposta = await requestJson(
+    `${alcançada.url}/instance/delete/${encodeURIComponent(nome)}`,
+    key,
+    { method: "DELETE" },
+    20000,
+  );
+  if (resposta.ok || resposta.status === 404) return { ok: true as const };
+  return {
+    ok: false as const,
+    error: traduzErro(resposta.status, resposta.json, "Não foi possível excluir a conexão."),
+  };
+}
+
+export async function reconectarWhatsapp(nomeInformado: string) {
+  const { urls, key, instance } = evoConfig();
+  const nome = conexaoDoProjeto(nomeInformado, instance);
+  if (!nome) return { ok: false as const, error: "Essa conexão não pertence a este projeto." };
+  if (!urls.length || !key) return { ok: false as const, error: "Evolution API não configurada." };
+  const alcançada = await urlAlcancavel(urls, key);
+  if (!alcançada) return { ok: false as const, error: "A Evolution API não está acessível neste momento." };
+
+  const atual = lerConexoes(alcançada.json, instance).find((item) => item.nome === nome);
+  if (!atual) return { ok: false as const, error: "A conexão deste projeto não foi encontrada." };
+  if (atual.conectada) return { ok: true as const, conectado: true as const, numero: atual.numero };
 
   const conexao = await requestJson(
     `${alcançada.url}/instance/connect/${encodeURIComponent(nome)}`,

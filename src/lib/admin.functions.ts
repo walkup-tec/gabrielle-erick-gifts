@@ -386,6 +386,22 @@ export const adminConnectWhatsapp = createServerFn({ method: "POST" })
     return conectarWhatsapp(data.nome);
   });
 
+export const adminDeleteWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireMaster])
+  .inputValidator((d: unknown) => z.object({ nome: z.string().trim().min(2).max(40) }).parse(d))
+  .handler(async ({ data }) => {
+    const { excluirConexaoWhatsapp } = await import("@/lib/evolution.server");
+    return excluirConexaoWhatsapp(data.nome);
+  });
+
+export const adminReconnectWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireMaster])
+  .inputValidator((d: unknown) => z.object({ nome: z.string().trim().min(2).max(40) }).parse(d))
+  .handler(async ({ data }) => {
+    const { reconectarWhatsapp } = await import("@/lib/evolution.server");
+    return reconectarWhatsapp(data.nome);
+  });
+
 export const adminLogout = createServerFn({ method: "POST" }).handler(async () => {
   const { clearMasterCookie } = await import("@/lib/admin-auth.server");
   clearMasterCookie();

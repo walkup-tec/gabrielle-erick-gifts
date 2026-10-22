@@ -7,7 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { adminConnectWhatsapp, adminListWhatsapp } from "@/lib/admin.functions";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  adminConnectWhatsapp,
+  adminDeleteWhatsapp,
+  adminListWhatsapp,
+  adminReconnectWhatsapp,
+} from "@/lib/admin.functions";
 
 function Aguarde() {
   return (
@@ -18,49 +32,81 @@ function Aguarde() {
   );
 }
 
+type RespostaQr =
+  | { ok: false; error: string }
+  | { ok: true; conectado: true; numero: string }
+  | { ok: true; qr: string }
+  | { ok: true; aguardando: true };
+
 export function BotaoWhatsapp() {
   const [aberto, setAberto] = useState(false);
   const [adicionando, setAdicionando] = useState(false);
   const [nome, setNome] = useState("");
   const [qr, setQr] = useState("");
+  const [qrNome, setQrNome] = useState("");
   const [aguardando, setAguardando] = useState(false);
+  const [modo, setModo] = useState<"novo" | "reconectar">("novo");
+  const [alvo, setAlvo] = useState("");
   const [erro, setErro] = useState("");
+  const [confirmar, setConfirmar] = useState<{ nome: string; texto: string } | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
   const listar = useServerFn(adminListWhatsapp);
   const conectar = useServerFn(adminConnectWhatsapp);
+  const reconectar = useServerFn(adminReconnectWhatsapp);
+  const apagar = useServerFn(adminDeleteWhatsapp);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "whatsapp"],
     queryFn: () => listar(),
-    enabled: aberto,
-    refetchInterval: aberto && qr ? 3000 : false,
+    refetchInterval: aberto && (qr || aguardando) ? 3000 : 10000,
   });
 
   const conexoes = data?.ok ? data.conexoes : [];
+  const desconectado = Boolean(data?.ok && conexoes.length > 0 && conexoes.every((item) => !item.conectada));
 
   useEffect(() => {
     if (!aberto) {
       setAdicionando(false);
       setNome("");
       setQr("");
+      setQrNome("");
       setAguardando(false);
+      setAlvo("");
       setErro("");
+      setConfirmar(null);
     }
   }, [aberto]);
 
   useEffect(() => {
-    if (conexoes.length > 0) {
+    if (qrNome) {
+      const atual = conexoes.find((item) => item.nome === qrNome);
+      if (atual?.conectada) {
+        setQr("");
+        setQrNome("");
+        setAguardando(false);
+        setAlvo("");
+      }
+      return;
+    }
+    if ((adicionando || qr) && conexoes.some((item) => item.conectada)) {
       setQr("");
       setAdicionando(false);
       setAguardando(false);
+      setAlvo("");
+      setNome("");
     }
-  }, [conexoes.length]);
+  }, [conexoes, qrNome, adicionando, qr]);
 
   useEffect(() => {
-    if (!aberto || !aguardando || qr) return;
+    if (!aberto || !aguardando || qr || !alvo) return;
     let vezes = 0;
+    let cancelado = false;
     const timer = setInterval(async () => {
       vezes += 1;
-      const r = await conectar({ data: { nome } });
+      const r = (modo === "reconectar"
+        ? await reconectar({ data: { nome: alvo } })
+        : await conectar({ data: { nome: alvo } })) as RespostaQr;
+      if (cancelado) return;
       if (!r.ok) {
         setErro(r.error);
         setAguardando(false);
@@ -68,6 +114,7 @@ export function BotaoWhatsapp() {
       }
       if ("conectado" in r && r.conectado) {
         setAguardando(false);
+        setQr("");
         await qc.invalidateQueries({ queryKey: ["admin", "whatsapp"] });
         return;
       }
@@ -81,14 +128,13 @@ export function BotaoWhatsapp() {
         setErro("O QR Code não abriu. Tente conectar de novo.");
       }
     }, 2000);
-    return () => clearInterval(timer);
-  }, [aberto, aguardando, qr, nome, conectar, qc]);
+    return () => {
+      cancelado = true;
+      clearInterval(timer);
+    };
+  }, [aberto, aguardando, qr, alvo, modo, conectar, reconectar, qc]);
 
-  async function conectarNumero() {
-    setErro("");
-    setQr("");
-    setAguardando(true);
-    const r = await conectar({ data: { nome } });
+  async function aplicarResposta(r: RespostaQr) {
     if (!r.ok) {
       setErro(r.error);
       setAguardando(false);
@@ -96,6 +142,7 @@ export function BotaoWhatsapp() {
     }
     if ("conectado" in r && r.conectado) {
       setAguardando(false);
+      setQr("");
       await qc.invalidateQueries({ queryKey: ["admin", "whatsapp"] });
       return;
     }
@@ -105,9 +152,54 @@ export function BotaoWhatsapp() {
     }
   }
 
+  async function conectarNumero() {
+    setErro("");
+    setQr("");
+    setQrNome("");
+    setModo("novo");
+    setAlvo(nome);
+    setAguardando(true);
+    await aplicarResposta((await conectar({ data: { nome } })) as RespostaQr);
+  }
+
+  async function reconectarNumero(nomeInstancia: string) {
+    setErro("");
+    setQr("");
+    setQrNome(nomeInstancia);
+    setModo("reconectar");
+    setAlvo(nomeInstancia);
+    setAguardando(true);
+    await aplicarResposta((await reconectar({ data: { nome: nomeInstancia } })) as RespostaQr);
+  }
+
+  async function excluirConexao() {
+    if (!confirmar) return;
+    setExcluindo(true);
+    setErro("");
+    const r = await apagar({ data: { nome: confirmar.nome } });
+    setExcluindo(false);
+    if (!r.ok) {
+      setErro(r.error);
+      return;
+    }
+    setConfirmar(null);
+    setQr("");
+    setQrNome("");
+    setAguardando(false);
+    await qc.invalidateQueries({ queryKey: ["admin", "whatsapp"] });
+  }
+
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setAberto(true)}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setAberto(true)}
+        aria-label={desconectado ? "WhatsApp desconectado" : "WhatsApp"}
+        className={
+          desconectado ? "animate-pulse bg-red-600 text-white hover:bg-red-700 hover:text-white" : undefined
+        }
+      >
         WhatsApp
       </Button>
       <Dialog open={aberto} onOpenChange={setAberto}>
@@ -122,8 +214,42 @@ export function BotaoWhatsapp() {
             <ul className="space-y-2">
               {conexoes.map((conexao) => (
                 <li key={conexao.nome} className="rounded-2xl border px-4 py-3">
-                  <p className="text-sm text-muted-foreground">Número conectado</p>
-                  <p className="font-medium">{conexao.numero}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {conexao.conectada ? "Número conectado" : "Número desconectado"}
+                  </p>
+                  <p className="font-medium">{conexao.numero || conexao.rotulo}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {conexao.conectada ? null : (
+                      <Button
+                        type="button"
+                        className="rounded-full"
+                        disabled={aguardando && alvo === conexao.nome}
+                        onClick={() => void reconectarNumero(conexao.nome)}
+                      >
+                        Reconectar
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      className="rounded-full bg-red-600 text-white hover:bg-red-700"
+                      onClick={() =>
+                        setConfirmar({
+                          nome: conexao.nome,
+                          texto: conexao.numero || conexao.rotulo,
+                        })
+                      }
+                    >
+                      Excluir Conexão
+                    </Button>
+                  </div>
+                  {aguardando && qrNome === conexao.nome ? <div className="mt-3"><Aguarde /></div> : null}
+                  {qr && qrNome === conexao.nome ? (
+                    <img
+                      src={qr}
+                      alt="QR Code para reconectar o WhatsApp"
+                      className="mx-auto mt-3 h-64 w-64 rounded-xl border bg-white p-2"
+                    />
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -175,6 +301,28 @@ export function BotaoWhatsapp() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(confirmar)} onOpenChange={(open) => !open && !excluindo && setConfirmar(null)}>
+        <AlertDialogContent className="z-[60]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conexão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir a conexão {confirmar?.texto}? Ela será removida da Evolution.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <Button
+              type="button"
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={excluindo}
+              onClick={() => void excluirConexao()}
+            >
+              {excluindo ? "Aguarde ..." : "Excluir"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
