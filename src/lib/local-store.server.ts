@@ -133,8 +133,26 @@ async function readJson(path: string): Promise<Store | null> {
   }
 }
 
+function storeHasLiveData(store: Store) {
+  return Boolean(store.snapshotId) || store.guests.length > 0 || store.reservations.length > 0;
+}
+
+async function backupLiveStore(storePath: string, store: Store) {
+  if (!storeHasLiveData(store)) return;
+  const day = new Date().toISOString().slice(0, 10);
+  const dest = `${dirname(storePath)}/pontos/${day}.json`;
+  try {
+    await readFile(dest);
+    return;
+  } catch {
+    /* ainda não existe a cópia deste dia */
+  }
+  await mkdir(dirname(dest), { recursive: true });
+  await writeFile(dest, JSON.stringify(store, null, 2));
+}
+
 function mergeSeedInto(store: Store, seed: Store) {
-  if (seed.snapshotId && store.snapshotId !== seed.snapshotId) {
+  if (seed.snapshotId && store.snapshotId !== seed.snapshotId && !storeHasLiveData(store)) {
     store.snapshotId = seed.snapshotId;
     store.guests = seed.guests.map((guest) => ({ ...guest }));
     store.reservations = seed.reservations.map((reservation) => ({
@@ -210,6 +228,11 @@ async function readStore(): Promise<Store> {
   process.env["LOCAL_STORE_PATH"] = path;
   const store = (await readJson(path)) ?? emptyStore();
   if (!seeded) {
+    try {
+      await backupLiveStore(path, store);
+    } catch (error) {
+      console.error("[store] não foi possível guardar o ponto do dia", error);
+    }
     for (const seedPath of seedPaths()) {
       const seed = await readJson(seedPath);
       if (seed) mergeSeedInto(store, seed);

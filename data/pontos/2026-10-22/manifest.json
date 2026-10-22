@@ -1,0 +1,12 @@
+{
+  "id": "ponto-2026-10-22",
+  "createdAt": "2026-10-22T05:47:00-03:00",
+  "gitHead": "07ad0641a33e990033b1d9b8159294b8be8810e1",
+  "snapshotId": "recupera-46-convidados-com-escolhas",
+  "guests": 46,
+  "reservations": 5,
+  "confirmed": 5,
+  "items": 1,
+  "gifts": 0,
+  "source": "Cópia exata de data/local-store.json e data/local-store.seed.json neste repositório. O arquivo /data do servidor não entrou nesta cópia."
+}
