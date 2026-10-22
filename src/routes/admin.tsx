@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Loader2, LogOut, MessageCircle, Pencil, Search, Share2, Trash2 } from "lucide-react";
 
+import { BotaoWhatsapp } from "@/components/site/WhatsappConexao";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -148,16 +149,19 @@ function Painel() {
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl">Área do casal</h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={async () => {
-            await sairFn();
-            window.location.reload();
-          }}
-        >
-          <LogOut className="mr-1.5 h-4 w-4" aria-hidden /> Sair
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <BotaoWhatsapp />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              await sairFn();
+              window.location.reload();
+            }}
+          >
+            <LogOut className="mr-1.5 h-4 w-4" aria-hidden /> Sair
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5 grid grid-cols-3 gap-2">
