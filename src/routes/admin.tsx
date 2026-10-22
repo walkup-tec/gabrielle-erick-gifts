@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDateTime, maskWhatsapp } from "@/lib/format";
+import { formatDateTime, isValidWhatsapp, maskWhatsapp, sameWhatsapp } from "@/lib/format";
 import {
   adminDeleteGift,
   adminDeleteGuest,
@@ -454,6 +454,7 @@ function Convidados() {
   const [whats, setWhats] = useState("");
   const [busca, setBusca] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [erroWhats, setErroWhats] = useState("");
   const [enviando, setEnviando] = useState<{ id: string; acao: "convite" | "bingo" | "lembrete" } | null>(
     null,
   );
@@ -469,13 +470,28 @@ function Convidados() {
     return `${window.location.origin}/convite/${token}`;
   }
 
+  const telefoneDuplicado =
+    isValidWhatsapp(whats) &&
+    (data ?? []).some((c) => c.id !== id && sameWhatsapp(c.whatsapp, whats));
+
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
+    if (whats.trim() && !isValidWhatsapp(whats)) {
+      setErroWhats("Informe um WhatsApp no formato (11) 99999-9999.");
+      return;
+    }
+    if (telefoneDuplicado) {
+      setErroWhats("Este número já está cadastrado.");
+      return;
+    }
+    setErroWhats("");
     setSalvando(true);
     try {
       const r = await salvar({ data: { id, name: nome.trim(), whatsapp: whats || null } });
       if (!r?.ok) {
-        toast.error((r && "error" in r && r.error) || "Não foi possível salvar o convidado.");
+        const mensagem = (r && "error" in r && r.error) || "Não foi possível salvar o convidado.";
+        if (mensagem === "Este número já está cadastrado.") setErroWhats(mensagem);
+        toast.error(mensagem);
         return;
       }
       if (id) {
@@ -543,9 +559,18 @@ function Convidados() {
               value={whats}
               inputMode="tel"
               placeholder="(11) 99999-9999"
-              onChange={(e) => setWhats(maskWhatsapp(e.target.value))}
+              onChange={(e) => {
+                setWhats(maskWhatsapp(e.target.value));
+                setErroWhats("");
+              }}
               className="mt-1.5"
+              aria-invalid={Boolean(erroWhats) || telefoneDuplicado}
             />
+            {erroWhats || telefoneDuplicado ? (
+              <p className="mt-1.5 text-sm text-destructive">
+                {erroWhats || "Este número já está cadastrado."}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="mt-3 flex gap-2">
@@ -561,6 +586,7 @@ function Convidados() {
                 setId(undefined);
                 setNome("");
                 setWhats("");
+                setErroWhats("");
               }}
             >
               Cancelar
@@ -643,7 +669,8 @@ function Convidados() {
                     onClick={() => {
                       setId(c.id);
                       setNome(c.name);
-                      setWhats(c.whatsapp ?? "");
+                      setWhats(c.whatsapp ? maskWhatsapp(c.whatsapp) : "");
+                      setErroWhats("");
                     }}
                   >
                     <Pencil className="h-4 w-4" aria-hidden />

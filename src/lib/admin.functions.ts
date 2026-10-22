@@ -140,7 +140,28 @@ export const adminSaveGuest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     try {
     const local = await import("@/lib/local-store.server");
+    const { isValidWhatsapp, sameWhatsapp } = await import("@/lib/format");
     const payload = { name: data.name, whatsapp: data.whatsapp || null };
+
+    if (payload.whatsapp && !isValidWhatsapp(payload.whatsapp)) {
+      return {
+        ok: false as const,
+        whatsappSent: false as const,
+        error: "Informe um WhatsApp no formato (11) 99999-9999.",
+      };
+    }
+    if (payload.whatsapp) {
+      const duplicado = (await local.listLocalGuests()).find(
+        (guest) => guest.id !== data.id && sameWhatsapp(guest.whatsapp, payload.whatsapp),
+      );
+      if (duplicado) {
+        return {
+          ok: false as const,
+          whatsappSent: false as const,
+          error: "Este número já está cadastrado.",
+        };
+      }
+    }
 
     if (data.id) {
       const current = await local.findGuestById(data.id);
